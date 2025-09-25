@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>로그인</title></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<h1>로그인</h1>
+<form id="loginForm">
+    <input type="text" id="username" placeholder="아이디" required><br>
+    <input type="password" id="password" placeholder="비밀번호" required><br>
+    <button type="submit">로그인</button>
+</form>
+
+<p id="loginMsg"></p>
+
+<script>
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const data = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        };
+
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (res.status === 200) {
+            const result = await res.json();
+            localStorage.setItem("accessToken", result.accessToken);
+            localStorage.setItem("refreshToken", result.refreshToken);
+            document.getElementById("loginMsg").innerText = "로그인 성공! 홈으로 이동합니다.";
+            setTimeout(() => window.location.href = "/", 1000);
+        } else {
+            document.getElementById("loginMsg").innerText = "로그인 실패: " + res.status;
+        }
+    });
+</script>
+</body>
+</html>
