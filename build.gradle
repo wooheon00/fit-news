@@ -40,6 +40,9 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation 'mysql:mysql-connector-java:8.0.33'  // MySQL 드라이버
+
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
 tasks.named('test') {

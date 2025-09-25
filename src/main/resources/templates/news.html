@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>뉴스 테스트</title></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<h1>뉴스 테스트</h1>
+<button onclick="checkNews()">API 호출 테스트</button>
+
+<script>
+    async function checkNews() {
+        const res = await fetchWithAuth('/api/test');
+        if (res.status === 200) {
+            alert("API 호출 성공: " + await res.text());
+        } else {
+            alert("API 호출 실패: " + res.status);
+        }
+    }
+</script>
+</body>
+</html>

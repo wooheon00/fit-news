@@ -1,40 +1,69 @@
 package com.fitnews.fit_news.auth.jwt;
 
-import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
 import java.util.Date;
+
 
 @Component
 public class JwtTokenProvider {
 
-    private final String secretKey = "mySecretKey123";
+    private String secretKey = "mySuperSecretKeyForJwtTokenThatIsAtLeast32Bytes!";
 
-    private final long accessTokenValidity = 15 * 60 * 1000; // 15분
-    private final long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7일
+    // Access 10초, Refresh 25초
+    private final long accessTokenValidTime = 1000L * 10;
+    private final long refreshTokenValidTime = 1000L * 25;
 
-    // Access Token 생성
-    public String createAccessToken(String username) {
-        return createToken(username, accessTokenValidity);
+    @PostConstruct
+    public void init() {
+        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
-    // Refresh Token 생성
-    public String createRefreshToken(String username) {
-        return createToken(username, refreshTokenValidity);
+    public String generateAccessToken(String username) {
+        String token = createToken(username, accessTokenValidTime);
+        System.out.println("[JwtTokenProvider] AccessToken 발급: " + username + " (유효: " + accessTokenValidTime/1000 + "초)");
+        return token;
     }
 
-    private String createToken(String username, long validity) {
+    public String generateRefreshToken(String username) {
+        String token = createToken(username, refreshTokenValidTime);
+        System.out.println("[JwtTokenProvider] RefreshToken 발급: " + username + " (유효: " + refreshTokenValidTime/1000 + "초)");
+        return token;
+    }
+
+    private String createToken(String username, long validTime) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + validity);
-
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(now)
-                .setExpiration(expiry)
+                .setExpiration(new Date(now.getTime() + validTime))
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jws<Claims> claims = Jwts.parser()
+                    .setSigningKey(secretKey)
+                    .parseClaimsJws(token);
+
+            Date expiration = claims.getBody().getExpiration();
+            boolean valid = expiration.after(new Date());
+
+            if (!valid) {
+                System.out.println("[JwtTokenProvider] 토큰 만료됨");
+            }
+            return valid;
+        } catch (Exception e) {
+            System.out.println("[JwtTokenProvider] 토큰 검증 실패: " + e.getMessage());
+            return false;
+        }
     }
 
     public String getUsername(String token) {
@@ -44,13 +73,5 @@ public class JwtTokenProvider {
                 .getBody()
                 .getSubject();
     }
-
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
-    }
 }
+
