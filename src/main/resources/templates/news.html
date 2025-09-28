@@ -1,21 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>뉴스 테스트</title></head>
+<head>
+    <title>뉴스 테스트</title>
+    <meta charset="UTF-8">
+    <script>
+        async function logClick(newsId) {
+           const accessToken = localStorage.getItem("accessToken");
+
+           if (!accessToken) {
+               // 로그인 안 했으면 로그 안 남기고 바로 dummy 페이지로 이동
+               window.location.href = "/dummy";
+               return;
+           }
+
+           // 로그인 한 경우 → 로그 저장 API 호출
+           await fetch("/api/logs/click", {
+               method: "POST",
+               headers: {
+                   "Content-Type": "application/json",
+                   "Authorization": "Bearer " + accessToken   // 👈 여기 토큰 추가
+               },
+               body: JSON.stringify({ newsId })
+           });
+
+           // 성공/실패 관계없이 dummy 페이지로 이동
+           window.location.href = "/dummy";
+       }
+    </script>
+</head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
 <h1>뉴스 테스트</h1>
-<button onclick="checkNews()">API 호출 테스트</button>
+<hr>
 
-<script>
-    async function checkNews() {
-        const res = await fetchWithAuth('/api/test');
-        if (res.status === 200) {
-            alert("API 호출 성공: " + await res.text());
-        } else {
-            alert("API 호출 실패: " + res.status);
-        }
-    }
-</script>
+<!-- 뉴스 리스트 -->
+<h2>뉴스 목록</h2>
+<ul>
+    <li><a href="#" onclick="logClick('news1')">뉴스 1</a></li>
+    <li><a href="#" onclick="logClick('news2')">뉴스 2</a></li>
+    <li><a href="#" onclick="logClick('news3')">뉴스 3</a></li>
+</ul>
+
 </body>
 </html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>클릭 로그</title>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<h1>클릭 로그 목록</h1>
+
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>사용자</th>
+        <th>뉴스 ID</th>
+        <th>클릭 시간</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="log : ${logs}">
+        <td th:text="${log.id}"></td>
+        <td th:text="${log.userId}"></td>
+        <td th:text="${log.newsId}"></td>
+        <td th:text="${log.clickedAt}"></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
