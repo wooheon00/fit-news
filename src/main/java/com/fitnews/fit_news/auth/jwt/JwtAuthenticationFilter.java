@@ -1,27 +1,25 @@
 package com.fitnews.fit_news.auth.jwt;
 
+import com.fitnews.fit_news.auth.security.CustomUserDetails;
+import com.fitnews.fit_news.auth.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService customUserDetailsService; // ✅ 추가
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -30,20 +28,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        // ✅ 토큰이 존재할 때만 검증 로직 실행
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String username = jwtTokenProvider.getUsername(token);
 
-            List<GrantedAuthority> authorities =
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+            CustomUserDetails userDetails =
+                    (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
 
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
-        // ✅ 토큰이 없으면 그냥 다음 필터로 넘김
         filterChain.doFilter(request, response);
     }
 

@@ -21,32 +21,26 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ 인증/권한 실패 시 401 / 403 구분해서 응답
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED); // 401
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.sendError(HttpServletResponse.SC_FORBIDDEN); // 403
-                        })
+                        .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
                 )
-
                 .authorizeHttpRequests(auth -> auth
-                        // 정적 리소스 허용
+                        // 정적 리소스
                         .requestMatchers("/js/**", "/css/**", "/images/**", "/favicon.ico").permitAll()
 
-                        // 페이지 허용
-                        .requestMatchers("/", "/register", "/login", "/news", "/users").permitAll()
+                        // 페이지(뷰) — 로그인 없이 접근 허용
+                        .requestMatchers("/", "/register", "/login", "/news", "/users", "/dummy", "/logs", "/error").permitAll()
 
-                        // 인증 관련 API 허용
+                        // 인증/토큰 관련 API 허용
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // 그 외 API는 인증 필요
                         .requestMatchers("/api/**").authenticated()
-                )
 
-                // ✅ JWT 필터 추가
+                        // 그 외 나머지(예: 추가 페이지)도 우선 열어두고 테스트 편하게
+                        .anyRequest().permitAll()
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
