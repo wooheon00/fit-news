@@ -3,29 +3,85 @@
 <head>
     <title>뉴스 테스트</title>
     <meta charset="UTF-8">
+    <style>
+        .news-card {
+            display: flex;
+            align-items: flex-start;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .news-card:hover {
+            background-color: #f9f9f9;
+        }
+        .news-thumbnail {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            margin-right: 15px;
+            border-radius: 6px;
+        }
+        .news-content {
+            flex: 1;
+        }
+        .news-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .news-desc {
+            font-size: 13px;
+            color: #555;
+            margin: 0;
+        }
+        .news-date {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+
+    <!-- ✅ 로그인/토큰 관리 함수 포함 -->
+    <script src="/js/auth.js"></script>
+
     <script>
-        async function logClick(newsId) {
-           const accessToken = localStorage.getItem("accessToken");
+        async function logClick(event, newsId) {
+            const token = localStorage.getItem("accessToken");
 
-           if (!accessToken) {
-               // 로그인 안 했으면 로그 안 남기고 바로 dummy 페이지로 이동
-               window.location.href = "/dummy";
-               return;
-           }
+            // 로그인 안 한 경우 → 그냥 링크로 이동
+            if (!token) {
+                return true; // a 태그 기본 이동 허용
+            }
 
-           // 로그인 한 경우 → 로그 저장 API 호출
-           await fetch("/api/logs/click", {
-               method: "POST",
-               headers: {
-                   "Content-Type": "application/json",
-                   "Authorization": "Bearer " + accessToken   // 👈 여기 토큰 추가
-               },
-               body: JSON.stringify({ newsId })
-           });
+            // 로그인 한 경우 → 로그 API 호출 후 이동
+            event.preventDefault(); // 기본 이동 막음
 
-           // 성공/실패 관계없이 dummy 페이지로 이동
-           window.location.href = "/dummy";
-       }
+            try {
+                // ✅ fetchWithAuth 사용 (auth.js에 정의되어 있음)
+                const res = await fetchWithAuth("/api/logs/click", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ newsId })
+                });
+
+                if (res.ok) {
+                    const link = await res.text();
+                    window.location.href = link; // 원본 기사 이동
+                } else {
+                    console.error("로그 저장 실패", res.status);
+                    // 실패 시에는 그냥 원래 href로 이동
+                    window.location.href = event.target.href;
+                }
+            } catch (e) {
+                console.error("API 호출 오류", e);
+                window.location.href = event.target.href;
+            }
+
+            return false; // 우리가 직접 이동 처리했으므로 기본 동작 막음
+        }
     </script>
 </head>
 <body>
@@ -34,13 +90,24 @@
 <h1>뉴스 테스트</h1>
 <hr>
 
-<!-- 뉴스 리스트 -->
-<h2>뉴스 목록</h2>
-<ul>
-    <li><a href="#" onclick="logClick('news1')">뉴스 1</a></li>
-    <li><a href="#" onclick="logClick('news2')">뉴스 2</a></li>
-    <li><a href="#" onclick="logClick('news3')">뉴스 3</a></li>
-</ul>
+<!-- 뉴스 카드 리스트 -->
+<div th:each="n : ${newsList}">
+    <a th:href="${n.link}"
+       th:onclick="'return logClick(event,' + ${n.id} + ');'"
+       class="news-card">
+
+        <!-- 썸네일 -->
+        <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
+             alt="썸네일" class="news-thumbnail">
+
+        <!-- 콘텐츠 -->
+        <div class="news-content">
+            <p class="news-title" th:text="${n.title}"></p>
+            <p class="news-desc" th:text="${n.description}"></p>
+            <p class="news-date" th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
+        </div>
+    </a>
+</div>
 
 </body>
 </html>
