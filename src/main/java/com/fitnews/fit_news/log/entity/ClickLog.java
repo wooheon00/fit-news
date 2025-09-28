@@ -19,7 +19,7 @@ public class ClickLog {
 
     private Long userId; // JWT에서 추출한 사용자 ID
 
-    private String newsId; // 어떤 뉴스 클릭했는지 (news1, news2...)
+    private Long newsId;  // ✅ Long
 
     private LocalDateTime clickedAt;
 

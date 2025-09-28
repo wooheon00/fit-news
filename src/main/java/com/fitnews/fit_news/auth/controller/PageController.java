@@ -31,11 +31,6 @@ public class PageController {
         return "login";
     }
 
-    @GetMapping("/news")
-    public String news() {
-        return "news"; // ✅ 서버에서는 그냥 페이지 렌더링만
-    }
-
     @GetMapping("/users")
     public String users(Model model) {
         List<Member> members = memberRepository.findAll();
