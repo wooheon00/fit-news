@@ -1,7 +1,7 @@
 package com.fitnews.fit_news.news.controller;
 
 import com.fitnews.fit_news.news.entity.News;
-import com.fitnews.fit_news.news.service.NewsService;
+import com.fitnews.fit_news.news.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +14,11 @@ import java.util.List;
 public class NewsController {
 
     private final NewsService newsService;
+    private final NewsClassificationService newsClassificationService;
+    private final NewsCrawlingService newsCrawlingService;
+    private final NewsRecommendationService newsRecommendationService;
+    private final NewsScheduler newsScheduler;
+    private final OpenAIAPIService openAIAPIService;
 
     @GetMapping("/news")
     public String newsList(Model model) {
