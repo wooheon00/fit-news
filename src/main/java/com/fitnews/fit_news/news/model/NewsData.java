@@ -21,9 +21,15 @@ public class NewsData {
         this.description=description;
     }
 
+    public void setTc(Tc newsTc){
+        this.newsTc=newsTc;
+    }
+
     @Override
     public String toString(){
-        return title;
+        if(newsTc!=null)
+            return title+description+newsTc.getAge()+newsTc.getZender()+newsTc.getPolitic();
+        return title+description;
     }
 
 }

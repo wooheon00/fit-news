@@ -29,13 +29,13 @@ public class NewsCrawlingService {
     String Base_Url = "https://news-ex.jtbc.co.kr/v1/get/rss/section/";
     static final String[] SECTIONS = {
             "politics",
-            "economy",
-            "society",
-            "international",
-            "culture",
-            "entertaining",
-            "sports",
-            "weather"
+//            "economy",
+//            "society",
+//            "international",
+//            "culture",
+//            "entertaining",
+//            "sports",
+//            "weather"
     };
 
     public NewsCrawlingService() throws FeedException, IOException {
@@ -72,10 +72,10 @@ public class NewsCrawlingService {
 
         logger.info("Crawling finished. found {} items", crawledNews.size());
         // TEST
-        System.out.println("\n 뉴스 출력");
-        for(NewsData news : crawledNews){
-            System.out.println(news);
-        }
+//        System.out.println("\n 뉴스 출력");
+//        for(NewsData news : crawledNews){
+//            System.out.println(news);
+//        }
 
         return crawledNews;
     }

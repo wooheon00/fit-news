@@ -41,17 +41,24 @@ public class NewsScheduler {
                 logger.info("No new news items found at {}", crawlingTime);
                 return;
             }
+            logger.info("✅ 1 Crawling Clear");
 
             //2 Classification
+            String preprocessedNews = newsClassificationService.preprocessingNews(rawNews);
+            logger.info("✅ 2 Preprocessing Success");
+
+            String response= openAIAPIService.askChatGPT(preprocessedNews);
+            logger.info("✅ 3 Request Success");
+
             List<NewsData> classifiedNews
-                    = newsClassificationService.postprocessingNews(
-                    openAIAPIService.askChatGPT(newsClassificationService.preprocessingNews(rawNews)),
-                    rawNews
-            );
+                    = newsClassificationService.postprocessingNews(response, rawNews);
+            logger.info("✅ 4 PostProcessing Success");
+//            for(NewsData newsData : classifiedNews){
+//                System.out.println(newsData.toString());
+//            }
 
             //3 Saving
-            // TODO : 전처리된 뉴스 저장
-
+            // TODO : 분류된 뉴스 저장
             logger.info("Saved {} news items from crawling at {}", classifiedNews.size(), crawlingTime);
 
         } catch(Exception e){

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /*
 preprocessingNews : 크롤러에서 넘어온 raw news를 전처리(프롬프트화)
@@ -29,7 +30,7 @@ public class NewsClassificationService {
         if (newsData == null) return "";
         logger.info("Preprocessing {} news items", newsData.size());
 
-        // TODO 전처리 로직 : Build Prompt
+        // BuildPrompt
         StringBuilder prompt = new StringBuilder();
         prompt.append("""
         You are an AI model that classifies news articles based on three attributes:
@@ -76,14 +77,14 @@ public class NewsClassificationService {
         if (newsData == null) return Collections.emptyList();
         logger.info("Postprocessing {} news items", newsData.size());
 
-        // TODO 후처리 로직
         try{
-            // GPT 응답을 List<Tc> 형태로 파싱
-            List<Tc> classifications = objectMapper.readValue(response, new TypeReference<List<Tc>>() {});
+            List<Tc> tcList = objectMapper.readValue(
+                    response, new TypeReference<List<Tc>>() {}
+            );
 
-            // 뉴스 개수와 분류 결과 개수가 동일할 때 매핑
-            for (int i = 0; i < newsData.size() && i < classifications.size(); i++) {
-                newsData.get(i).setNewsTc(classifications.get(i));
+            for (Tc tc : tcList){
+                int index = tc.getIndex()-1;
+                newsData.get(index).setTc(tc);
             }
 
             logger.info("After Postprocessing {} news items", newsData.size());

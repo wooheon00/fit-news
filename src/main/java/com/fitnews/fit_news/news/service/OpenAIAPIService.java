@@ -3,10 +3,12 @@ package com.fitnews.fit_news.news.service;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -20,21 +22,30 @@ public class OpenAIAPIService {
     private static final Logger logger =
             LoggerFactory.getLogger(OpenAIAPIService.class);
 
-    // TODO request method
-    private String apiKey = "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";
+    @Value("${openai.api.key}")
+    private String apiKey;
+
+    private WebClient webClient;
 
     @PostConstruct
     public void init(){
-        System.out.println("✅ API Key Loaded: " + (apiKey != null ? "YES" : "NO"));
+        logger.info("✅ API Key Loaded: " + (apiKey != null ? "YES" : "NO"));
+
+        webClient = WebClient.builder()
+                .baseUrl("https://api.openai.com/v1/chat/completions")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        logger.info("✅ WebClient Initialized, API Key loaded");
     }
 
-    private final WebClient webClient = WebClient.builder()
-            .baseUrl("https://api.openai.com/v1/chat/completions")
-            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .build();
 
     public String askChatGPT(String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            throw new IllegalArgumentException("Prompt cannot be null or blank");
+        }
+
         Map<String, Object> message = Map.of("role", "user", "content", prompt);
         Map<String, Object> body = Map.of(
                 "model", "gpt-4",
@@ -42,16 +53,48 @@ public class OpenAIAPIService {
                 "temperature", 0.7
         );
 
-        return webClient.post()
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .map(response -> {
-                    List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                    Map<String, Object> choice = choices.get(0);
-                    Map<String, Object> messageMap = (Map<String, Object>) choice.get("message");
-                    return (String) messageMap.get("content");
-                })
-                .block();
+        logger.info("➡️ Sending request to OpenAI: {}", body);
+
+        try {
+            // 3. WebClient 요청
+            Map<String, Object> response = webClient.post()
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            logger.info("⬅️ OpenAI response: {}", response);
+
+            // 4. 안전한 응답 처리
+            if (response == null || !response.containsKey("choices")) {
+                return "No response from OpenAI";
+            }
+
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+            if (choices.isEmpty()) return "No choices returned";
+
+            Map<String, Object> messageMap = (Map<String, Object>) choices.get(0).get("message");
+            if (messageMap == null || !messageMap.containsKey("content")) return "No content returned";
+
+            return (String) messageMap.get("content");
+
+        } catch (WebClientResponseException e) {
+            logger.error("OpenAI API Error: {} - {}", e.getRawStatusCode(), e.getResponseBodyAsString());
+            return "OpenAI API Error: " + e.getRawStatusCode();
+        } catch (Exception e) {
+            logger.error("Unexpected error: ", e);
+            return "Unexpected error occurred";
+        }
+//        return webClient.post()
+//                .bodyValue(body)
+//                .retrieve()
+//                .bodyToMono(Map.class)
+//                .map(response -> {
+//                    List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+//                    Map<String, Object> choice = choices.get(0);
+//                    Map<String, Object> messageMap = (Map<String, Object>) choice.get("message");
+//                    return (String) messageMap.get("content");
+//                })
+//                .block();
     }
 }
