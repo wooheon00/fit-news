@@ -18,42 +18,27 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@Component
+@Service // ✅ @Component는 제거 (중복 방지)
 public class NewsCrawlingService {
-    private static final Logger logger =
-            LoggerFactory.getLogger(NewsCrawlingService.class);
-    String Base_Url = "https://news-ex.jtbc.co.kr/v1/get/rss/section/";
-    static final String[] SECTIONS = {
-            "politics",
-//            "economy",
-//            "society",
-//            "international",
-//            "culture",
-//            "entertaining",
-//            "sports",
-//            "weather"
-    };
+    private static final Logger logger = LoggerFactory.getLogger(NewsCrawlingService.class);
+    private static final String BASE_URL = "https://news-ex.jtbc.co.kr/v1/get/rss/section/";
+    static final String[] SECTIONS = { "politics" /*, "economy", ... */ };
 
-    public NewsCrawlingService() throws FeedException, IOException {
-    }
+    public NewsCrawlingService() { } // ✅ throws 제거
 
-    public List<NewsData> crawlingNews(long crawlingTime) throws IOException {
+    public List<NewsData> crawlingNews(long crawlingTime) {
         logger.info("Crawling started. crawlingTime(epoch ms) = {}", crawlingTime);
-
         List<NewsData> crawledNews = new ArrayList<>();
 
-        for(String section : SECTIONS){
-            String feedUrl = Base_Url+section;
-
-            try{
-                URL url = new URL(feedUrl);
-                SyndFeedInput input = new SyndFeedInput();
-                SyndFeed feed = input.build(new XmlReader(url));
-
+        for (String section : SECTIONS) {
+            String feedUrl = BASE_URL + section;
+            try (XmlReader reader = new XmlReader(new URL(feedUrl))) {
+                SyndFeed feed = new SyndFeedInput().build(reader);
                 logger.info("Fetching section: {}", section);
 
                 for (SyndEntry entry : feed.getEntries()) {
@@ -63,20 +48,21 @@ public class NewsCrawlingService {
                             ? entry.getDescription().getValue()
                             : "No description available";
 
-                    crawledNews.add(new NewsData(title, link, description));
+                    // 🔹 pubDate 변환
+                    java.util.Date published = entry.getPublishedDate(); // null일 수도 있음
+                    java.time.LocalDateTime pubDate = (published != null)
+                            ? java.time.ZonedDateTime.ofInstant(published.toInstant(), java.time.ZoneId.systemDefault())
+                            .toLocalDateTime()
+                            : java.time.LocalDateTime.now();
+
+                    crawledNews.add(new NewsData(title, link, description, pubDate)); // 🔹 4개 인자 사용
                 }
-            } catch(Exception e){
+            } catch (Exception e) {
                 logger.error("Error while fetching section: {}", section, e);
             }
         }
 
         logger.info("Crawling finished. found {} items", crawledNews.size());
-        // TEST
-//        System.out.println("\n 뉴스 출력");
-//        for(NewsData news : crawledNews){
-//            System.out.println(news);
-//        }
-
         return crawledNews;
     }
 }

@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface NewsRepository extends JpaRepository<News, Long> {
     Optional<News> findByLink(String link);
+    boolean existsByLink(String link);  // ✅ 중복 체크용
 }

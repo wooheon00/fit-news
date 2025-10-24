@@ -4,6 +4,8 @@ package com.fitnews.fit_news.news.model;
 Tendency 클래스
  */
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -11,16 +13,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @RequiredArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)        // 알 수 없는 필드는 무시
 public class Tc {
-    // Json응답 파싱을 위한 인덱스 정보
     private int index;
 
-    // 성별 지향성 (0=여성향, 100=남성향)
-    private int zender;
+    @JsonAlias({"zender", "gender"})               // ← 둘 다 허용
+    private int gender;
 
-    // 정치 성향 (0=보수, 100=진보)
     private int politic;
-
-    // 연령대 (a=미성년자, b=청년, c=중년, d=노년)
     private char age;
 }
