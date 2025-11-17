@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>회원 성향 목록</title>
+</head>
+<body>
+
+<div th:replace="fragments/header :: header"></div>
+
+<h2>회원 성향 목록</h2>
+
+<table border="1" cellpadding="5">
+    <thead>
+    <tr>
+        <th>회원 ID</th>
+        <th>아이디(username)</th>
+        <th>정치 성향</th>
+        <th>성별 성향</th>
+        <th>연령대</th>
+        <th>클릭 수</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="pref : ${prefs}">
+        <td th:text="${pref.member.id}"></td>
+        <td th:text="${pref.member.username}"></td>
+        <td th:text="${pref.politic}"></td>
+        <td th:text="${pref.gender}"></td>
+        <td th:text="${pref.age}"></td>
+        <td th:text="${pref.clickCount}"></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

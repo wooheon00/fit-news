@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>추천 뉴스</title>
+</head>
+<body>
+
+<div th:replace="fragments/header :: header"></div>
+
+<h2>나에게 맞는 추천 뉴스 3개</h2>
+
+<div id="recommendation-container">
+    <p>추천 뉴스를 불러오는 중...</p>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/recommend.js"></script>
+
+</body>
+</html>
