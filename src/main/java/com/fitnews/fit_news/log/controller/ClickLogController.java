@@ -21,21 +21,19 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClickLogController {
 
-    private final ClickLogRepository clickLogRepository;
     private final NewsRepository newsRepository;
+    private final ClickLogService clickLogService;
 
     @PostMapping("/click")
     public ResponseEntity<String> logClick(@RequestBody ClickLogRequest req,
                                            @AuthenticationPrincipal CustomUserDetails user) {
+
         News news = newsRepository.findById(req.getNewsId())
                 .orElseThrow(() -> new IllegalArgumentException("뉴스를 찾을 수 없습니다: " + req.getNewsId()));
 
-        // ✅ 로그인 된 경우에만 로그 적재 (user가 null이 아니고 인증됨)
+        // ✅ 로그인 된 경우에만 로그 + 성향 업데이트
         if (user != null) {
-            ClickLog log = new ClickLog();
-            log.setUserId(user.getId());     // ✅ Long
-            log.setNewsId(news.getId());     // ✅ Long
-            clickLogRepository.save(log);
+            clickLogService.logClick(user.getId(), news.getId());
         }
 
         // 링크 반환 → 프론트에서 이 링크로 이동

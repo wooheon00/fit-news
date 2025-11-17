@@ -4,9 +4,13 @@ import com.fitnews.fit_news.auth.dto.TokenResponse;
 import com.fitnews.fit_news.auth.entity.Member;
 import com.fitnews.fit_news.auth.jwt.JwtTokenProvider;
 import com.fitnews.fit_news.auth.repository.MemberRepository;
+import com.fitnews.fit_news.memberPreference.service.MemberPreferenceService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +19,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberPreferenceService memberPreferenceService;
 
     public String register(String username, String password, String email) {
         if (memberRepository.findByUsername(username).isPresent()) {
@@ -23,6 +28,10 @@ public class AuthService {
         String encodedPw = passwordEncoder.encode(password);
         Member member = new Member(null, username, encodedPw, null, email, null);
         memberRepository.save(member);
+
+        //생성된 Member에 맞는 preference 객체 생성
+        memberPreferenceService.createDefaultFor(member);
+
         return "회원가입 성공";
     }
 
@@ -41,6 +50,28 @@ public class AuthService {
         member.setRefreshToken(refreshToken);
         memberRepository.save(member);
 
+
+
         return new TokenResponse(accessToken, refreshToken);
     }
+
+    public Long getMemberIdFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "토큰 없음");
+        }
+
+        String token = authHeader.substring(7); // "Bearer " 잘라내기
+
+        // JwtTokenProvider 안에 이런 메서드가 있다고 가정 (없으면 추가해야 함)
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "존재하지 않는 사용자"
+                ));
+
+        return member.getId();
+    }
+
 }

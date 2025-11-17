@@ -73,5 +73,13 @@ public class JwtTokenProvider {
                 .getBody()
                 .getSubject();
     }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
 }
 
