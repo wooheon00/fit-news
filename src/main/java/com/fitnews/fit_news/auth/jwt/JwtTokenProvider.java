@@ -16,9 +16,9 @@ public class JwtTokenProvider {
 
     private String secretKey = "mySuperSecretKeyForJwtTokenThatIsAtLeast32Bytes!";
 
-    // Access 10초, Refresh 25초
-    private final long accessTokenValidTime = 1000L * 10;
-    private final long refreshTokenValidTime = 1000L * 25;
+
+    private final long accessTokenValidTime = 1000L * 60 * 60;
+    private final long refreshTokenValidTime = 1000L * 60 * 60 * 24;
 
     @PostConstruct
     public void init() {
