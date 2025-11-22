@@ -1,6 +1,7 @@
 package com.fitnews.fit_news.auth.service;
 
 import com.fitnews.fit_news.auth.dto.TokenResponse;
+import com.fitnews.fit_news.auth.entity.LoginType;
 import com.fitnews.fit_news.auth.entity.Member;
 import com.fitnews.fit_news.auth.jwt.JwtTokenProvider;
 import com.fitnews.fit_news.auth.repository.MemberRepository;
@@ -25,14 +26,20 @@ public class AuthService {
         if (memberRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("이미 존재하는 아이디입니다.");
         }
-        String encodedPw = passwordEncoder.encode(password);
-        Member member = new Member(null, username, encodedPw, null, email, null);
-        memberRepository.save(member);
 
-        //생성된 Member에 맞는 preference 객체 생성
+        Member member = new Member();
+        member.setUsername(username);
+        member.setPassword(passwordEncoder.encode(password));
+        member.setEmail(email);
+        member.setLoginType(LoginType.LOCAL);
+        member.setProvider(null);
+        member.setProviderId(null);
+
+        memberRepository.save(member);
         memberPreferenceService.createDefaultFor(member);
 
         return "회원가입 성공";
+
     }
 
     public TokenResponse login(String username, String password) {
@@ -46,13 +53,20 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(member.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(member.getUsername());
 
-        // ✅ Refresh 토큰 저장
         member.setRefreshToken(refreshToken);
         memberRepository.save(member);
 
+        // ✅ 온보딩이 필요한지 판단:
+        // 1) onboardingCompleted=false 이고
+        // 2) MemberPreference가 존재(혹은 기본 생성)하는지
+        boolean needOnboarding = !member.isOnboardingCompleted();
 
+        // 혹시 MemberPreference가 없는 상태라면 기본값 생성 (안전장치)
+        if (!memberPreferenceService.existsFor(member)) {
+            memberPreferenceService.createDefaultFor(member);
+        }
 
-        return new TokenResponse(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken, needOnboarding);
     }
 
     public Long getMemberIdFromRequest(HttpServletRequest request) {

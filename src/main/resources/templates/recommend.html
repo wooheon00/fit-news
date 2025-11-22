@@ -1,21 +1,55 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
     <title>추천 뉴스</title>
 </head>
 <body>
+<div th:replace="~{fragments/header :: header}"></div>
 
-<div th:replace="fragments/header :: header"></div>
+<h1>추천 뉴스</h1>
 
-<h2>나에게 맞는 추천 뉴스 3개</h2>
+<ul id="recommend-list">
+    <!-- JS로 채움 -->
+</ul>
 
-<div id="recommendation-container">
-    <p>추천 뉴스를 불러오는 중...</p>
-</div>
+<p id="msg"></p>
 
 <script src="/js/auth.js"></script>
-<script src="/js/recommend.js"></script>
+<script>
+    (async function () {
+        try {
+            const res = await fetchWithAuth("/api/recommend");
+
+            if (res.status === 401) {
+                // ✅ 로그인 안 된 상태 → 로그인 페이지로
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!res.ok) {
+                document.getElementById("msg").innerText = "추천 뉴스 불러오기 실패: " + res.status;
+                return;
+            }
+
+            const data = await res.json(); // 예: [{title, link}, ...]
+
+            const ul = document.getElementById("recommend-list");
+            ul.innerHTML = "";
+
+            data.forEach(item => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = item.link;
+                a.innerText = item.title;
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+        } catch (e) {
+            console.error(e);
+            document.getElementById("msg").innerText = "오류가 발생했습니다.";
+        }
+    })();
+</script>
 
 </body>
 </html>

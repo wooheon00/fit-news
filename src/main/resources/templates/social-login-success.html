@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>소셜 로그인 처리중...</title>
+</head>
+<body>
+<p>소셜 로그인 처리 중...</p>
+
+<script th:inline="javascript">
+    const accessToken = /*[[${accessToken}]]*/ "";
+    const refreshToken = /*[[${refreshToken}]]*/ "";
+    const needOnboarding = /*[[${needOnboarding}]]*/ false;
+
+    if (accessToken && refreshToken) {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+    }
+
+    if (needOnboarding) {
+        window.location.href = "/onboarding";
+    } else {
+        window.location.href = "/";
+    }
+</script>
+
+</body>
+</html>

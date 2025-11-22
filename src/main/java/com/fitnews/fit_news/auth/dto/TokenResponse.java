@@ -8,5 +8,6 @@ import lombok.Getter;
 public class TokenResponse {
     private String accessToken;
     private String refreshToken;
+    private boolean needOnboarding;   // ✅ 온보딩 필요 여부
 }
 

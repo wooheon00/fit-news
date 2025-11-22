@@ -30,6 +30,10 @@ public class MemberPreferenceService {
         memberPreferenceRepository.save(pref);
     }
 
+    public boolean existsFor(Member member) {
+        return memberPreferenceRepository.existsByMember(member);
+    }
+
     @Transactional
     public void updatePreference(Long memberId, NewsTendency tendency) {
 
@@ -50,4 +54,29 @@ public class MemberPreferenceService {
                 + ", gender=" + pref.getGender()
                 + ", clickCount=" + pref.getClickCount());
     }
+
+    public MemberPreference getByMemberOrCreate(Member member) {
+        return memberPreferenceRepository.findByMember_Id(member.getId())
+                .orElseGet(() -> {
+                    MemberPreference pref = MemberPreference.createDefault(member);
+                    return memberPreferenceRepository.save(pref);
+                });
+    }
+
+    @Transactional
+    public MemberPreference updateForOnboarding(Member member,
+                                                int politic,
+                                                int gender,
+                                                char age) {
+        MemberPreference pref = memberPreferenceRepository.findByMember(member)
+                .orElseGet(() -> MemberPreference.createDefault(member));
+
+        pref.setPolitic(politic);
+        pref.setGender(gender);
+        pref.setAge(age);
+        // clickCount는 그대로 두고 싶으면 그대로
+
+        return memberPreferenceRepository.save(pref); // ✅ 최종 저장
+    }
+
 }

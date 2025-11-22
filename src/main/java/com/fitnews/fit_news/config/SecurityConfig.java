@@ -1,53 +1,86 @@
 package com.fitnews.fit_news.config;
 
 import com.fitnews.fit_news.auth.jwt.JwtAuthenticationFilter;
+import com.fitnews.fit_news.auth.social.CustomOAuth2UserService;
+import com.fitnews.fit_news.auth.social.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration
 @RequiredArgsConstructor
+@EnableWebSecurity
+@Configuration
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                        .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
-                )
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+
                 .authorizeHttpRequests(auth -> auth
-                        // 정적 리소스
-                        .requestMatchers("/js/**", "/css/**", "/images/**", "/favicon.ico").permitAll()
+                        // ✅ 정적 리소스는 항상 허용
+                        .requestMatchers(
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/webjars/**"
+                        ).permitAll()
 
-                        // 페이지(뷰) — 로그인 없이 접근 허용
-                        .requestMatchers("/", "/register", "/login", "/news", "/users", "/dummy", "/logs", "/error").permitAll()
+                        // ✅ 로그인/회원가입, OAuth2, 소셜 콜백, 공개 페이지들 허용
+                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/register",
+                                "/api/auth/**",
+                                "/h2-console/**",
+                                "/oauth2/**",
+                                "/social-login/**",
+                                "/news",
+                                "/news-tendencies",
+                                "/users",
+                                "/logs",
+                                "/member-preferences",
+                                "/onboarding",          // 온보딩 페이지
+                                "/recommend"            // ⭐ 페이지는 열어둔다
+                        ).permitAll()
 
-                        // 인증/토큰 관련 API 허용
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // ✅ 추천 뉴스 "API"만 인증 필요
+                        .requestMatchers("/api/recommend/**").authenticated()
 
-                        // 그 외 API는 인증 필요
-                        .requestMatchers("/api/**").authenticated()
-
-                        // 그 외 나머지(예: 추가 페이지)도 우선 열어두고 테스트 편하게
+                        // 나머지는 일단 오픈 (원하면 나중에 조이기)
                         .anyRequest().permitAll()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
+                );
+
+        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 }

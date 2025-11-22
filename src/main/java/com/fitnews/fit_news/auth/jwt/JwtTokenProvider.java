@@ -1,9 +1,6 @@
 package com.fitnews.fit_news.auth.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +46,18 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
+            // 🔥 1) null / 빈문자열 방어
+            if (token == null || token.isBlank()) {
+                return false;
+            }
+
+            // 🔥 2) JWT 형식(aaa.bbb.ccc)인지 먼저 확인
+            long dotCount = token.chars().filter(ch -> ch == '.').count();
+            if (dotCount != 2) {
+                // 형식 자체가 이상한 건 그냥 false만 주고 로그는 안 찍음
+                return false;
+            }
+
             Jws<Claims> claims = Jwts.parser()
                     .setSigningKey(secretKey)
                     .parseClaimsJws(token);
@@ -60,8 +69,12 @@ public class JwtTokenProvider {
                 System.out.println("[JwtTokenProvider] 토큰 만료됨");
             }
             return valid;
-        } catch (Exception e) {
-            System.out.println("[JwtTokenProvider] 토큰 검증 실패: " + e.getMessage());
+        } catch (ExpiredJwtException e) {
+            System.out.println("[JwtTokenProvider] 토큰 만료됨(예외): " + e.getMessage());
+            return false;
+        } catch (JwtException | IllegalArgumentException e) {
+            // 실제 디버깅 필요할 때만 보고, 평소에는 시끄럽지 않게
+            System.out.println("[JwtTokenProvider] 토큰 검증 실패(JwtException): " + e.getClass().getSimpleName());
             return false;
         }
     }

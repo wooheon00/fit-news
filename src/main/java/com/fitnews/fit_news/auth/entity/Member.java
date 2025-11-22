@@ -17,12 +17,20 @@ public class Member {
     @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
-    private String password; // 암호화된 비밀번호 저장
+    private String password; // ✅ LOCAL은 값 있음, SOCIAL은 null 가능
 
     private String name;
     private String email;
 
-    // ✅ Refresh Token 필드 추가
+    // ✅ Refresh Token 필드
     private String refreshToken;
+
+    private boolean onboardingCompleted = false;
+
+    // ✅ 여기부터 소셜/로그인 타입 추가
+    @Enumerated(EnumType.STRING)
+    private LoginType loginType;   // LOCAL, GOOGLE, KAKAO
+
+    private String provider;       // "google", "kakao"
+    private String providerId;     // 소셜에서 넘어온 고유 ID
 }

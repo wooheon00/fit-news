@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>회원 정보 & 성향 설정</title>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<h1>회원 정보 / 성향 설정</h1>
+
+<form id="onboardingForm">
+    <h3>기본 정보</h3>
+    <label>이름:
+        <input type="text" id="name" required>
+    </label><br/>
+
+    <label>나이대:
+        <select id="age">
+            <option value="a">미성년</option>
+            <option value="b">청년</option>
+            <option value="c">중년</option>
+            <option value="d">노년</option>
+        </select>
+    </label><br/>
+
+    <label>성별 성향 (0=여성향 ~ 100=남성향):
+        <input type="range" id="gender" min="0" max="100" value="50">
+        <span id="genderValue">50</span>
+    </label><br/>
+
+    <h3>정치 성향 질문</h3>
+    <p>아래 뉴스 제목 중, 더 관심이 가는 쪽을 선택해주세요.</p>
+
+    <label>
+        <input type="radio" name="politicChoice" value="conservative" required>
+        [A] 세금 감면 및 규제 완화를 통한 기업 활성화
+    </label><br/>
+
+    <label>
+        <input type="radio" name="politicChoice" value="neutral">
+        [B] 복지와 경제 성장을 균형 있게 추진하는 정책
+    </label><br/>
+
+    <label>
+        <input type="radio" name="politicChoice" value="progressive">
+        [C] 복지 확대와 사회적 약자 보호를 위한 정책
+    </label><br/>
+
+    <button type="submit">저장하기</button>
+</form>
+
+<p id="msg"></p>
+
+<script src="/js/auth.js"></script>
+<script>
+    const genderInput = document.getElementById("gender");
+    const genderValue = document.getElementById("genderValue");
+    genderInput.addEventListener("input", () => {
+        genderValue.innerText = genderInput.value;
+    });
+
+    document.getElementById("onboardingForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const politicChoice = document.querySelector('input[name="politicChoice"]:checked').value;
+
+        // 정치성향을 대략 점수로 맵핑 (예: 0~100)
+        let politicScore = 50;
+        if (politicChoice === "conservative") politicScore = 20;
+        if (politicChoice === "neutral")      politicScore = 50;
+        if (politicChoice === "progressive")  politicScore = 80;
+
+        const body = {
+            name: document.getElementById("name").value,
+            age: document.getElementById("age").value,                // 'a'~'d'
+            gender: parseInt(document.getElementById("gender").value), // 0~100
+            politic: politicScore
+        };
+
+        const res = await fetchWithAuth("/api/onboarding/me", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            document.getElementById("msg").innerText = "저장되었습니다. 이제 추천 뉴스를 이용해보세요!";
+            setTimeout(() => window.location.href = "/recommend", 1000);
+        } else {
+            document.getElementById("msg").innerText = "저장 실패: " + res.status;
+        }
+    });
+</script>
+
+</body>
+</html>

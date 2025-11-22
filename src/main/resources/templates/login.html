@@ -5,6 +5,8 @@
 <div th:replace="~{fragments/header :: header}"></div>
 
 <h1>로그인</h1>
+
+<!-- 기존 ID/PW 로그인 그대로 유지 -->
 <form id="loginForm">
     <input type="text" id="username" placeholder="아이디" required><br>
     <input type="password" id="password" placeholder="비밀번호" required><br>
@@ -13,31 +15,42 @@
 
 <p id="loginMsg"></p>
 
+<hr/>
+
+<!-- 🔥 여기만 추가 -->
+<h3>소셜 로그인</h3>
+<a href="/oauth2/authorization/google">구글로 로그인</a><br/>
+<a href="/oauth2/authorization/kakao">카카오로 로그인</a><br/>
+
 <script>
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        const data = {
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value
-        };
+    const data = {
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value
+    };
 
-        const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-
-        if (res.status === 200) {
-            const result = await res.json();
-            localStorage.setItem("accessToken", result.accessToken);
-            localStorage.setItem("refreshToken", result.refreshToken);
-            document.getElementById("loginMsg").innerText = "로그인 성공! 홈으로 이동합니다.";
-            setTimeout(() => window.location.href = "/", 1000);
-        } else {
-            document.getElementById("loginMsg").innerText = "로그인 실패: " + res.status;
-        }
+    const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
     });
+
+    if (res.status === 200) {
+        const result = await res.json();
+        localStorage.setItem("accessToken", result.accessToken);
+        localStorage.setItem("refreshToken", result.refreshToken);
+
+        if (result.needOnboarding) {
+            window.location.href = "/onboarding";
+        } else {
+            window.location.href = "/";
+        }
+    } else {
+        document.getElementById("loginMsg").innerText = "로그인 실패: " + res.status;
+    }
+});
 </script>
 </body>
 </html>
