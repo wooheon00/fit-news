@@ -2,6 +2,8 @@ package com.fitnews.fit_news.news.controller;
 
 import com.fitnews.fit_news.auth.service.AuthService;
 import com.fitnews.fit_news.news.dto.NewsDto;
+import com.fitnews.fit_news.news.dto.RecommendedResponse;
+import com.fitnews.fit_news.news.dto.RecommendedResult;
 import com.fitnews.fit_news.news.entity.News;
 import com.fitnews.fit_news.news.service.NewsRecommendationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,16 +25,14 @@ public class NewsRecommendApiController {
     private final NewsRecommendationService newsRecommendationService;
 
     @GetMapping("/recommend")
-    public List<NewsDto> recommend(HttpServletRequest request) {
+    public RecommendedResponse recommend(HttpServletRequest request) {
 
         Long memberId = authService.getMemberIdFromRequest(request);
 
-        // 🔥 로그인 유저 기준 추천 뉴스 3개
-        List<News> newsList = newsRecommendationService.recommend(memberId, 3);
+        RecommendedResult result = newsRecommendationService
+                .recommendWithOpposite(memberId, 3, 2);  // 상위 3, 반대 2
 
-        return newsList.stream()
-                .map(NewsDto::from)
-                .toList();
+        return RecommendedResponse.from(result);
     }
 }
 

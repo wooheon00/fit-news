@@ -2,20 +2,193 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>추천 뉴스</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f7;
+        }
+
+        h1 {
+            margin: 24px auto 8px;
+            max-width: 1000px;
+            padding: 0 16px;
+        }
+
+        .page-subtitle {
+            max-width: 1000px;
+            margin: 0 auto 16px;
+            padding: 0 16px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .news-section {
+            max-width: 1000px;
+            margin: 16px auto;
+            padding: 0 16px 24px;
+        }
+
+        .news-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .news-section-title h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #ddd;
+            color: #666;
+            background: #fff;
+        }
+
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .news-card {
+            flex: 1 1 280px;
+            max-width: 320px;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .news-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .news-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 8px;
+            line-height: 1.3;
+        }
+
+        .news-title a {
+            color: #111827;
+            text-decoration: none;
+        }
+
+        .news-title a:hover {
+            text-decoration: underline;
+        }
+
+        .news-meta {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .news-tag-opposite {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .news-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+        }
+
+        .news-link-btn {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid #2563eb;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+        }
+
+        .news-link-btn:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+        #msg {
+            max-width: 1000px;
+            margin: 16px auto;
+            padding: 0 16px;
+            color: #b91c1c;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<h1>추천 뉴스</h1>
+<h1>맞춤 + 균형 잡힌 뉴스 추천</h1>
+<p class="page-subtitle">
+    회원님의 성향과 잘 맞는 뉴스와 함께, 다른 시각의 뉴스도 함께 보여드려요.
+</p>
 
-<ul id="recommend-list">
-    <!-- JS로 채움 -->
-</ul>
+<div class="news-section">
+    <div class="news-section-title">
+        <h2>내 성향에 맞는 뉴스</h2>
+        <span class="badge">개인화 추천</span>
+    </div>
+    <div class="card-container" id="aligned-container">
+        <!-- 맞는 뉴스 카드들이 들어감 -->
+    </div>
+</div>
+
+<div class="news-section">
+    <div class="news-section-title">
+        <h2>다른 시각의 뉴스</h2>
+        <span class="badge">균형 잡힌 정보</span>
+    </div>
+    <div class="card-container" id="opposite-container">
+        <!-- 반대 성향 뉴스 카드들이 들어감 -->
+    </div>
+</div>
 
 <p id="msg"></p>
 
 <script src="/js/auth.js"></script>
 <script>
+
+
+    async function logAndGo(newsId, url) {
+        try {
+            const res = await fetch("/api/logs/click", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ newsId })
+            });
+
+            const link = await res.text();
+            window.open(link, "_blank");   // 로그 기록 후 기사 페이지로 이동
+        } catch (e) {
+            console.error("로그 기록 실패:", e);
+            window.open(url, "_blank");
+        }
+    }
+
     (async function () {
         try {
             const res = await fetchWithAuth("/api/recommend");
@@ -27,23 +200,73 @@
             }
 
             if (!res.ok) {
-                document.getElementById("msg").innerText = "추천 뉴스 불러오기 실패: " + res.status;
+                document.getElementById("msg").innerText =
+                    "추천 뉴스 불러오기 실패: " + res.status;
                 return;
             }
 
-            const data = await res.json(); // 예: [{title, link}, ...]
+            const data = await res.json();
 
-            const ul = document.getElementById("recommend-list");
-            ul.innerHTML = "";
+            // 백엔드가 {aligned: [...], opposite: [...]} 형태라고 가정
+            // 혹시 옛날 버전처럼 배열만 넘어오면 fallback
+            const aligned = data.aligned ?? data;
+            const opposite = data.opposite ?? [];
 
-            data.forEach(item => {
-                const li = document.createElement("li");
-                const a = document.createElement("a");
-                a.href = item.link;
-                a.innerText = item.title;
-                li.appendChild(a);
-                ul.appendChild(li);
+            const alignedContainer = document.getElementById("aligned-container");
+            const oppositeContainer = document.getElementById("opposite-container");
+
+            alignedContainer.innerHTML = "";
+            oppositeContainer.innerHTML = "";
+
+            if ((!aligned || aligned.length === 0) && (!opposite || opposite.length === 0)) {
+                document.getElementById("msg").innerText = "추천할 뉴스가 없습니다.";
+                return;
+            }
+
+            // 공통 카드 생성 함수
+            function createCard(item, isOpposite) {
+                const card = document.createElement("div");
+                card.className = "news-card";
+                card.style.cursor = "pointer";
+
+                card.onclick = () => logAndGo(item.id, item.link);  // 🔥 로그 + 이동
+
+                const titleEl = document.createElement("h3");
+                titleEl.className = "news-title";
+                titleEl.innerText = item.title || "(제목 없음)";
+
+                const meta = document.createElement("div");
+                meta.className = "news-meta";
+                meta.innerText = item.pubDate || "";
+
+                const footer = document.createElement("div");
+                footer.className = "news-footer";
+
+                // 기존 내성향/반대 표시 붙이기
+                if (isOpposite) {
+                    const tag = document.createElement("span");
+                    tag.className = "news-tag-opposite";
+                    tag.innerText = "다른 시각의 기사";
+                    footer.appendChild(tag);
+                } else {
+                    footer.appendChild(document.createElement("span"));
+                }
+
+                card.appendChild(titleEl);
+                card.appendChild(meta);
+                card.appendChild(footer);
+
+                return card;
+            }
+
+            aligned.forEach(item => {
+                alignedContainer.appendChild(createCard(item, false));
             });
+
+            opposite.forEach(item => {
+                oppositeContainer.appendChild(createCard(item, true));
+            });
+
         } catch (e) {
             console.error(e);
             document.getElementById("msg").innerText = "오류가 발생했습니다.";

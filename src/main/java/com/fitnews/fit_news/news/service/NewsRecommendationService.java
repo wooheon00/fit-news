@@ -9,6 +9,7 @@ import com.fitnews.fit_news.log.repository.ClickLogRepository;
 import com.fitnews.fit_news.memberPreference.entity.MemberPreference;
 import com.fitnews.fit_news.memberPreference.repository.MemberPreferenceRepository;
 import com.fitnews.fit_news.memberPreference.service.SimilarityCalculator;
+import com.fitnews.fit_news.news.dto.RecommendedResult;
 import com.fitnews.fit_news.news.entity.News;
 import com.fitnews.fit_news.news.entity.NewsTendency;
 import com.fitnews.fit_news.news.model.UserInfo;
@@ -24,9 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,47 +37,69 @@ public class NewsRecommendationService {
     private final NewsTendencyRepository newsTendencyRepository;
     private final ClickLogRepository clickLogRepository;
 
-    /**
-     * 🔥 회원에게 상위 N개 뉴스 추천
-     */
     @Transactional(readOnly = true)
-    public List<News> recommend(Long memberId, int limit) {
+    public RecommendedResult recommendWithOpposite(Long memberId, int alignedLimit, int oppositeLimit) {
 
-        // 1) 회원 취향 가져오기
+        // 1) 회원 취향
         MemberPreference pref = memberPreferenceRepository.findByMember_Id(memberId)
                 .orElseThrow(() -> new IllegalStateException("MemberPreference 없음"));
 
-        // 2) 아직 안 본 뉴스 후보 가져오기 (예: 최근 3일치)
+        // 2) 추천 후보
         List<News> candidates = newsRepository.findRecentNotClickedByMember(memberId);
 
-        // 3) 각 뉴스에 대해 유사도 점수 계산
+        // 3) 유사도 계산
         List<ScoredNews> scored = new ArrayList<>();
 
         for (News news : candidates) {
             NewsTendency tendency = newsTendencyRepository.findByNewsId(news.getId())
                     .orElse(null);
 
-            if (tendency == null) {
-                // 성향 정보 없는 뉴스는 일단 스킵하거나 기본 점수 부여
-                continue;
-            }
+            if (tendency == null) continue;
 
             double similarity = SimilarityCalculator.totalSimilarity(pref, tendency);
-
-            // (선택) 발행일 기반 신선도 점수 추가
             double recency = calcRecencyScore(news.getPubDate());
-
             double totalScore = 0.8 * similarity + 0.2 * recency;
 
-            scored.add(new ScoredNews(news, totalScore));
+            scored.add(new ScoredNews(news, totalScore, similarity));
         }
 
-        // 4) 점수 순으로 정렬 후 상위 N개 리턴
-        return scored.stream()
-                .sorted((a, b) -> Double.compare(b.score, a.score)) // 내림차순
-                .limit(limit)
+        // ---------------------
+        // 4) 정렬 후 "나와 맞는 기사 N개"
+        // ---------------------
+        List<News> aligned = scored.stream()
+                .sorted((a, b) -> Double.compare(b.score, a.score)) // 점수 내림차순
+                .limit(alignedLimit)
                 .map(s -> s.news)
                 .toList();
+
+        // ---------------------
+        // 5) "나와 가장 반대 성향인 기사 M개"
+        //    similarity 오름차순 정렬로 선정
+        // ---------------------
+        Set<Long> usedIds = aligned.stream()
+                .map(News::getId)
+                .collect(Collectors.toSet());
+
+        List<News> opposite = scored.stream()
+                .filter(s -> !usedIds.contains(s.news.getId()))
+                .sorted(Comparator.comparingDouble(s -> s.similarity)) // similarity 오름차순
+                .limit(oppositeLimit)
+                .map(s -> s.news)
+                .toList();
+
+        return new RecommendedResult(aligned, opposite);
+    }
+
+    private static class ScoredNews {
+        private final News news;
+        private final double score;
+        private final double similarity;
+
+        public ScoredNews(News news, double score, double similarity) {
+            this.news = news;
+            this.score = score;
+            this.similarity = similarity;
+        }
     }
 
     /**
@@ -94,16 +116,6 @@ public class NewsRecommendationService {
         return 0.1;
     }
 
-    /**
-     * 내부용 DTO
-     */
-    private static class ScoredNews {
-        private final News news;
-        private final double score;
 
-        private ScoredNews(News news, double score) {
-            this.news = news;
-            this.score = score;
-        }
-    }
+
 }
