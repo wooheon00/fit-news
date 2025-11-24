@@ -90,23 +90,33 @@
 <h1>뉴스 테스트</h1>
 <hr>
 
-<!-- 뉴스 카드 리스트 -->
-<div th:each="n : ${newsList}">
-    <a th:href="${n.link}"
-       th:onclick="'return logClick(event,' + ${n.id} + ');'"
-       class="news-card">
+<!-- 🔥 newsBySource: Map<String, List<News>> -->
+<div th:each="entry : ${newsList}">
 
-        <!-- 썸네일 -->
-        <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
-             alt="썸네일" class="news-thumbnail">
+    <!-- 뉴스사 제목 -->
+    <h2 class="source-title" th:text="${entry.key}"></h2>
 
-        <!-- 콘텐츠 -->
-        <div class="news-content">
-            <p class="news-title" th:text="${n.title}"></p>
-            <p class="news-desc" th:text="${n.description}"></p>
-            <p class="news-date" th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
-        </div>
-    </a>
+    <!-- 해당 뉴스사가 가진 뉴스 카드들 -->
+    <div th:each="n : ${entry.value}">
+        <a th:href="${n.link}"
+           th:onclick="'return logClick(event,' + ${n.id} + ');'"
+           class="news-card">
+
+            <!-- 썸네일 -->
+            <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
+                 alt="썸네일" class="news-thumbnail">
+
+            <!-- 콘텐츠 -->
+            <div class="news-content">
+                <p class="news-title" th:text="${n.title}"></p>
+                <p class="news-desc" th:text="${n.description}"></p>
+                <p class="news-date"
+                   th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
+            </div>
+        </a>
+    </div>
+
+    <hr/>
 </div>
 
 </body>

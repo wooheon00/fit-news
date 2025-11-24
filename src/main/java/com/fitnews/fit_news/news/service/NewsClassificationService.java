@@ -154,4 +154,16 @@ public class NewsClassificationService {
         return null;
     }
 
+    public String detectSourceFromLink(String link){
+        if (link==null) return "Unknown";
+
+        String lower = link.toLowerCase();
+
+        if (lower.contains("jtbc")) return "JTBC";
+        if (lower.contains("yna")) return "연합뉴스";
+        if (lower.contains("chosun")) return "조선일보";
+        if (lower.contains("mk")) return "매일경제";
+
+        return "Unknown";
+    }
 }

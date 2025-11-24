@@ -20,49 +20,92 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.ZonedDateTime;
+import java.util.*;
 
-@Service // ✅ @Component는 제거 (중복 방지)
+@Service
 public class NewsCrawlingService {
-    private static final Logger logger = LoggerFactory.getLogger(NewsCrawlingService.class);
-    private static final String BASE_URL = "https://news-ex.jtbc.co.kr/v1/get/rss/section/";
-    static final String[] SECTIONS = { "politics" /*, "economy", ... */ };
 
-    public NewsCrawlingService() { } // ✅ throws 제거
+    private static final Logger logger = LoggerFactory.getLogger(NewsCrawlingService.class);
+
+    // 🔹 여러 뉴스 사이트의 RSS URL 목록 (원한다면 외부 properties 파일로 분리 가능)
+    private static final Map<String, String[]> NEWS_SOURCES = Map.of(
+
+            "JTBC", new String[]{
+                    "https://news-ex.jtbc.co.kr/v1/get/rss/section/politics"
+            },
+
+            "조선일보", new String[]{
+                    "https://www.chosun.com/arc/outboundfeeds/rss/category/politics/?outputType=xml"
+            },
+
+            "연합뉴스", new String[]{
+                    "https://www.yna.co.kr/rss/politics.xml"
+            },
+
+            "매일경제", new String[]{
+                    "https://www.mk.co.kr/rss/30100041/"
+            }
+    );
 
     public List<NewsData> crawlingNews(long crawlingTime) {
         logger.info("Crawling started. crawlingTime(epoch ms) = {}", crawlingTime);
-        List<NewsData> crawledNews = new ArrayList<>();
 
-        for (String section : SECTIONS) {
-            String feedUrl = BASE_URL + section;
-            try (XmlReader reader = new XmlReader(new URL(feedUrl))) {
-                SyndFeed feed = new SyndFeedInput().build(reader);
-                logger.info("Fetching section: {}", section);
+        // 1️⃣ 각 뉴스사별 RSS feed 리스트 읽어서 SyndEntry 리스트로 저장
+        Map<String, List<SyndEntry>> allFeeds = new HashMap<>();
 
-                for (SyndEntry entry : feed.getEntries()) {
-                    String title = entry.getTitle();
-                    String link = entry.getLink();
-                    String description = entry.getDescription() != null
-                            ? entry.getDescription().getValue()
-                            : "No description available";
+        for (Map.Entry<String, String[]> siteEntry : NEWS_SOURCES.entrySet()) {
+            String siteName = siteEntry.getKey();
+            String[] rssUrls = siteEntry.getValue();
 
-                    // 🔹 pubDate 변환
-                    java.util.Date published = entry.getPublishedDate(); // null일 수도 있음
-                    java.time.LocalDateTime pubDate = (published != null)
-                            ? java.time.ZonedDateTime.ofInstant(published.toInstant(), java.time.ZoneId.systemDefault())
-                            .toLocalDateTime()
-                            : java.time.LocalDateTime.now();
+            List<SyndEntry> siteEntries = new ArrayList<>();
 
-                    crawledNews.add(new NewsData(title, link, description, pubDate)); // 🔹 4개 인자 사용
+            for (String rssUrl : rssUrls) {
+                try (XmlReader reader = new XmlReader(new URL(rssUrl))) {
+                    SyndFeed feed = new SyndFeedInput().build(reader);
+                    siteEntries.addAll(feed.getEntries());
+                } catch (Exception e) {
+                    logger.error("Error fetching RSS {} from {}", rssUrl, siteName, e);
                 }
-            } catch (Exception e) {
-                logger.error("Error while fetching section: {}", section, e);
             }
+
+            allFeeds.put(siteName, siteEntries);
         }
 
-        logger.info("Crawling finished. found {} items", crawledNews.size());
+        // 2️⃣ 인덱스로 각 뉴스사에서 한 뉴스씩 가져오기
+        List<NewsData> crawledNews = new ArrayList<>();
+        boolean hasMore = true;
+        int index = 0;
+
+        while (hasMore) {
+            hasMore = false;
+
+            for (Map.Entry<String, List<SyndEntry>> entry : allFeeds.entrySet()) {
+                List<SyndEntry> entries = entry.getValue();
+
+                if (index < entries.size()) {
+                    SyndEntry syndEntry = entries.get(index);
+
+                    String title = syndEntry.getTitle();
+                    String link = syndEntry.getLink();
+                    String description = syndEntry.getDescription() != null
+                            ? syndEntry.getDescription().getValue()
+                            : "No description available";
+
+                    Date published = syndEntry.getPublishedDate();
+                    LocalDateTime pubDate = (published != null)
+                            ? ZonedDateTime.ofInstant(published.toInstant(), ZoneId.systemDefault()).toLocalDateTime()
+                            : LocalDateTime.now();
+
+                    crawledNews.add(new NewsData(title, link, description, pubDate));
+
+                    hasMore = true;
+                }
+            }
+            index++;
+        }
+
+        logger.info("Crawling finished. total collected = {}", crawledNews.size());
         return crawledNews;
     }
 }

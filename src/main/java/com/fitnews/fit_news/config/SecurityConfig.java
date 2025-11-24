@@ -59,7 +59,8 @@ public class SecurityConfig {
                                 "/logs",
                                 "/member-preferences",
                                 "/onboarding",          // 온보딩 페이지
-                                "/recommend"            // ⭐ 페이지는 열어둔다
+                                "/recommend",
+                                "/main"// ⭐ 페이지는 열어둔다
                         ).permitAll()
 
                         // ✅ 추천 뉴스 "API"만 인증 필요

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Fit-News</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    .title {
+        text-align: center;
+        font-size: 2em;
+        margin: 20px 0;
+    }
+
+    header {
+        background-color: #f2f2f2;
+        padding: 10px 20px;
+    }
+
+    /* 2x3 그리드 */
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(3, 300px);
+        gap: 10px;
+        padding: 20px;
+    }
+
+    .grid-item {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #fafafa;
+        overflow-y: auto; /* 스크롤 추가 */
+    }
+
+    /* 뉴스 카드 스타일 */
+    .news-card {
+        display: flex;
+        align-items: flex-start;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .news-card:hover {
+        background-color: #f9f9f9;
+    }
+    .news-thumbnail {
+        width: 80px;
+        height: 60px;
+        object-fit: cover;
+        margin-right: 10px;
+        border-radius: 6px;
+    }
+    .news-content {
+        flex: 1;
+    }
+    .news-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin: 0 0 3px 0;
+    }
+    .news-desc {
+        font-size: 12px;
+        color: #555;
+        margin: 0;
+    }
+    .news-date {
+        font-size: 11px;
+        color: #888;
+        margin-top: 3px;
+    }
+
+    /* 섹터 내부 스크롤 크기 */
+    .grid-item h2 {
+        font-size: 16px;
+        margin-top: 0;
+    }
+  </style>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    async function logClick(event, newsId) {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return true;
+
+        event.preventDefault();
+        try {
+            const res = await fetchWithAuth("/api/logs/click", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ newsId })
+            });
+
+            if (res.ok) {
+                const link = await res.text();
+                window.location.href = link;
+            } else {
+                window.location.href = event.target.href;
+            }
+        } catch (e) {
+            window.location.href = event.target.href;
+        }
+
+        return false;
+    }
+  </script>
+</head>
+<body>
+
+<div class="title">Fit-News</div>
+
+<header th:replace="fragments/header :: header"></header>
+
+<div class="grid-container">
+  <!-- 섹터 1,2는 비워둠 -->
+  <div class="grid-item" id="sector1">추천뉴스</div>
+  <div class="grid-item" id="sector2">이건 어때요?</div>
+
+  <!-- 섹터 3~6: 뉴스 출력 -->
+  <div th:each="entry, iterStat : ${newsList}" class="grid-item"
+       th:if="${iterStat.index >= 0 and iterStat.index < 4}">
+    <h2 th:text="${entry.key}">언론사</h2>
+    <div th:each="n : ${entry.value}">
+      <a th:href="${n.link}" th:onclick="'return logClick(event,' + ${n.id} + ');'" class="news-card">
+        <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
+             class="news-thumbnail" alt="썸네일">
+        <div class="news-content">
+          <p class="news-title" th:text="${n.title}"></p>
+          <p class="news-desc" th:text="${n.description}"></p>
+          <p class="news-date" th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
+        </div>
+      </a>
+    </div>
+  </div>
+  </div>
+</div>
+
+</body>
+</html>

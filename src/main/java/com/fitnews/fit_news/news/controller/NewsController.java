@@ -8,6 +8,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,10 +22,15 @@ public class NewsController {
     private final NewsScheduler newsScheduler;
     private final OpenAIAPIService openAIAPIService;
 
-    @GetMapping("/news")
+    @GetMapping("/main")
     public String newsList(Model model) {
         List<News> newsList = newsService.getAllNews();
-        model.addAttribute("newsList", newsList);
-        return "news"; // templates/news.html
+
+        Map<String, List<News>> newsBySource = newsList.stream()
+                .collect(Collectors.groupingBy(news -> newsClassificationService.detectSourceFromLink(news.getLink())));
+
+        model.addAttribute("newsList", newsBySource);
+        return "main"; // templates/news.html
     }
+
 }
