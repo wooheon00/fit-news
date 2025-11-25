@@ -30,7 +30,7 @@ public class NewsRecommendApiController {
         Long memberId = authService.getMemberIdFromRequest(request);
 
         RecommendedResult result = newsRecommendationService
-                .recommendWithOpposite(memberId, 3, 2);  // 상위 3, 반대 2
+                .recommendWithOpposite(memberId, 3, 3);
 
         return RecommendedResponse.from(result);
     }

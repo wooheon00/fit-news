@@ -11,6 +11,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -64,16 +67,32 @@ public class NewsScheduler {
             List<NewsData> deDuped = deDuplicateInBatch(rawNews);
             logger.info("✅ De-dup in batch: {} -> {}", rawNews.size(), deDuped.size());
 
-            // 3) DB 기준 중복 제거 (이미 저장된 링크는 분석/저장 스킵)
-            List<NewsData> onlyNew = deDuped.stream()
-                    .filter(nd -> !newsRepository.existsByLink(nd.getLink()))
+            // 3) 언론사별로 그룹핑 + DB 기준 중복 제거 + 언론사별 최신 10개만
+            Map<String, List<NewsData>> groupedBySource = deDuped.stream()
+                    .collect(Collectors.groupingBy(nd ->
+                            newsClassificationService.detectSourceFromLink(nd.getLink())
+                    ));
+
+            List<NewsData> onlyNew = groupedBySource.values().stream()
+                    .flatMap(listForSource ->
+                            listForSource.stream()
+                                    // DB에 이미 있는 링크는 제외
+                                    .filter(nd -> !newsRepository.existsByLink(nd.getLink()))
+                                    // pubDate 기준 최신순 정렬
+                                    .sorted(Comparator.comparing(
+                                            NewsData::getPubDate,
+                                            Comparator.nullsLast(Comparator.naturalOrder())
+                                    ).reversed())
+                                    // 🔥 언론사별 상위 10개만
+                                    .limit(10)
+                    )
                     .toList();
 
             if (onlyNew.isEmpty()) {
-                logger.info("All crawled items already exist in DB. Nothing to analyze/save.");
+                logger.info("All crawled items already exist in DB (by source). Nothing to analyze/save.");
                 return;
             }
-            logger.info("✅ After DB de-dup: {} items to analyze", onlyNew.size());
+            logger.info("✅ After DB de-dup & per-source limit: {} items to analyze", onlyNew.size());
 
             // 4) 배치 분류/저장
             int totalSavedNews = 0;
@@ -105,7 +124,16 @@ public class NewsScheduler {
                 // 저장: News → (있다면) NewsTendency
                 int savedNewsCnt = 0, savedTendencyCnt = 0, skippedNewsCnt = 0;
                 for (NewsData nd : classified) {
-                    // DTO → News 저장 (중복은 내부에서 방지)
+
+                    // 🔥 1) 성향(Tc)이 없으면 이 뉴스는 통째로 스킵
+                    if (nd.getNewsTc() == null) {
+                        skippedNewsCnt++;
+                        logger.warn("⚠️ No NewsTendency for this news. Skip saving. title={}, link={}",
+                                nd.getTitle(), nd.getLink());
+                        continue;
+                    }
+
+                    // 2) DTO → News 저장 (중복은 내부에서 방지)
                     News savedNews = newsService.saveNews(nd.toNewsEntity());
                     if (savedNews == null) {
                         skippedNewsCnt++;
@@ -113,11 +141,9 @@ public class NewsScheduler {
                     }
                     savedNewsCnt++;
 
-                    // 분류된 경우에만 성향 저장 (이미 존재하면 upsert)
-                    if (nd.getNewsTc() != null) {
-                        newsTendencyService.saveOrUpdateFromTc(savedNews, nd.getNewsTc());
-                        savedTendencyCnt++;
-                    }
+                    // 3) 성향 저장 (이미 존재하면 upsert)
+                    newsTendencyService.saveOrUpdateFromTc(savedNews, nd.getNewsTc());
+                    savedTendencyCnt++;
                 }
 
                 totalSavedNews += savedNewsCnt;
@@ -143,15 +169,12 @@ public class NewsScheduler {
         if (response == null
                 || response.startsWith("OpenAI API Error")
                 || response.startsWith("Unexpected error")) {
-            logger.warn("⚠️ Skip classification (batch={}) due to OpenAI error/invalid response: {}", batchIdx, response);
 
-            int saved = 0, skipped = 0;
-            for (NewsData nd : batch) {
-                News savedNews = newsService.saveNews(nd.toNewsEntity()); // 내부에서 중복 방지 + 썸네일
-                if (savedNews != null) saved++; else skipped++;
-            }
-            logger.info("✅ Batch {} fallback save done. saved={}, skipped={}", batchIdx, saved, skipped);
-            return true;
+            logger.warn("⚠️ Skip whole batch (batch={}) due to OpenAI error/invalid response: {}",
+                    batchIdx, response);
+
+            // ⛔️ 더 이상 뉴스도 저장하지 않는다
+            return true;   // 호출부에서 continue;
         }
         return false;
     }

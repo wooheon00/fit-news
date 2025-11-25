@@ -53,7 +53,7 @@ public class OpenAIAPIService {
         Map<String, Object> user = Map.of("role", "user", "content", prompt);
 
         Map<String, Object> body = Map.of(
-                "model", "gpt-4",       // 가능하면 최신 모델로
+                "model", "gpt-4o-mini",
                 "messages", List.of(sys, user),
                 "temperature", 0.2,
                 "max_tokens", 4096      // 🔸 길이 부족으로 끊기는 것 방지
