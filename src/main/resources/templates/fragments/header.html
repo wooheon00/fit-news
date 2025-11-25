@@ -1,10 +1,9 @@
-<div th:fragment="header" xmlns:th="http://www.w3.org/1999/xhtml">
+<!-- 디버깅용 헤더 -->
+<div th:fragment="debugHeader" xmlns:th="http://www.w3.org/1999/xhtml">
     <div style="background:#eee;padding:10px;">
-        <a href="/">홈</a> |
-        <a href="/main">메인</a> |
+        <a href="/">메인</a> |
         <a href="/register">회원가입</a> |
         <a href="/login">로그인</a> |
-<!--        <a href="/news">뉴스테스트</a> |-->
         <a href="/news-tendencies">뉴스성향목록</a> |
         <a href="/users">회원목록</a> |
         <a href="/logs">클릭로그</a> |
@@ -16,6 +15,143 @@
                 id="logoutBtn" onclick="logout()">로그아웃</button>
     </div>
     <hr>
-    <!-- ✅ 공통 스크립트 로드 -->
     <script src="/js/auth.js"></script>
 </div>
+
+<!-- 실제 서비스용 헤더 -->
+<header th:fragment="header" xmlns:th="http://www.thymeleaf.org">
+    <nav class="site-header">
+        <div class="header-left">
+            <!-- 로고 클릭 시 항상 메인(/) -->
+            <a href="/" class="logo">Fit-News</a>
+        </div>
+        <div class="header-right">
+            <!-- 비로그인 상태 -->
+            <div id="nav-logged-out" class="nav-group">
+                <a href="/register" class="nav-link">회원가입</a>
+                <a href="/login" class="nav-link nav-primary">로그인</a>
+            </div>
+
+            <!-- 로그인 상태 -->
+            <div id="nav-logged-in" class="nav-group" style="display:none;">
+                <span id="nav-username" class="welcome-text"></span>
+                <button type="button" class="nav-link nav-button" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <style>
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            background: rgba(248, 250, 252, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #111827;
+            text-decoration: none;
+        }
+        .logo:hover {
+            color: #2563eb;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .nav-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-link {
+            font-size: 13px;
+            color: #374151;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background: #e5e7eb;
+        }
+        .nav-primary {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+        .nav-primary:hover {
+            background: #2563eb;
+            color: white;
+        }
+        .nav-button {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        .welcome-text {
+            font-size: 13px;
+            color: #111827;
+            margin-right: 4px;
+        }
+    </style>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        async function updateHeaderAuthUI() {
+            const loggedOut = document.getElementById("nav-logged-out");
+            const loggedIn  = document.getElementById("nav-logged-in");
+            const nameSpan  = document.getElementById("nav-username");
+
+            if (!loggedOut || !loggedIn || !nameSpan) return;
+
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+                // 비로그인
+                loggedOut.style.display = "flex";
+                loggedIn.style.display  = "none";
+                return;
+            }
+
+            let displayName = null;
+
+            // 1️⃣ 먼저 /api/auth/me 에서 name 가져오기 시도
+            try {
+                const res = await fetchWithAuth("/api/auth/me");
+                if (res.ok) {
+                    const me = await res.json();
+                    displayName = me.name || me.username || null;
+                }
+            } catch (e) {
+                console.warn("auth/me 호출 실패, 토큰에서 이름 추출로 fallback");
+            }
+
+            // 2️⃣ 실패하면 토큰 payload에서라도
+            if (!displayName) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    displayName = payload.name || payload.nickname || payload.username || payload.sub || "회원";
+                } catch (e) {
+                    displayName = "회원";
+                }
+            }
+
+            nameSpan.textContent = displayName + "님 환영합니다.";
+            loggedOut.style.display = "none";
+            loggedIn.style.display  = "flex";
+        }
+
+        document.addEventListener("DOMContentLoaded", updateHeaderAuthUI);
+    </script>
+</header>

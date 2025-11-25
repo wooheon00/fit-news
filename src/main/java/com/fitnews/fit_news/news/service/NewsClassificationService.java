@@ -25,12 +25,24 @@ public class NewsClassificationService {
             LoggerFactory.getLogger(NewsClassificationService.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    // 🔹 HTML 엔티티/이상한 문자 정리용
+    private String safeText(String s) {
+        if (s == null) return "";
+        return s
+                .replace("&apos;", "'")
+                .replace("&#39;", "'")
+                .replace("&quot;", "\"")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .trim();
+    }
+
     // 전처리
     String preprocessingNews(List<NewsData> newsData){
         if (newsData == null) return "";
         logger.info("Preprocessing {} news items", newsData.size());
 
-        // BuildPrompt
         StringBuilder prompt = new StringBuilder();
         prompt.append("""
         You are an AI model that classifies news articles based on three attributes:
@@ -47,17 +59,27 @@ public class NewsClassificationService {
         Below are the news items to classify:
         """);
 
-        int index=1;
+        int index = 1;
         for (NewsData news : newsData) {
+            // ✅ title / description 정리 + description 없으면 title로 대체
+            String title = safeText(news.getTitle());
+            String desc  = news.getDescription();
+            if (desc == null || desc.isBlank()) {
+                desc = title;  // 🔥 설명 없으면 제목만이라도 사용
+            } else {
+                desc = safeText(desc);
+            }
+
             prompt.append(String.format("""
-                
-                [%d]
-                Title: %s
-                Description: %s
-                """,
+                    
+                    [%d]
+                    Title: %s
+                    Description: %s
+                    """,
                     index++,
-                    news.getTitle(),
-                    news.getDescription() != null ? news.getDescription() : "No description"));
+                    title,
+                    desc
+            ));
         }
 
         prompt.append("\nNow, provide classification results ONLY in JSON array.\n");

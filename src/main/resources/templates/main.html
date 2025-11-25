@@ -7,13 +7,17 @@
     body {
         font-family: Arial, sans-serif;
         margin: 0;
-        padding: 0;
+        padding: 0 0 70px;   /* 👈 bottom 패딩 추가 (footer 높이만큼) */
+        background-color: #f5f5f7;
     }
 
     .title {
         text-align: center;
-        font-size: 2em;
-        margin: 20px 0;
+        font-size: 2.2em;
+        margin: 24px 0 8px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: #111827;
     }
 
     header {
@@ -21,67 +25,288 @@
         padding: 10px 20px;
     }
 
-    /* 2x3 그리드 */
+    /* 전체 레이아웃 좌우 여백 조금 넓게 */
+    .page-wrapper {
+        max-width: 1120px;
+        margin: 0 auto 40px;
+        padding: 0 8px;
+    }
+
+    /* 추천 섹터와 일반 섹터 구분을 위해 grid 두 줄로 나눔 */
     .grid-container {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: repeat(3, 300px);
-        gap: 10px;
-        padding: 20px;
+        grid-template-columns: 1fr 1fr;   /* 👈 동일 비율 */
+        grid-template-rows: auto auto;
+        gap: 16px;
     }
 
     .grid-item {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px;
-        background-color: #fafafa;
-        overflow-y: auto; /* 스크롤 추가 */
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px 14px 16px;
+        background-color: #ffffff;
+        overflow: hidden;
     }
 
-    /* 뉴스 카드 스타일 */
+    /* === 섹터 1,2 : 추천 영역 강조 === */
+    .highlight-sector {
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+        position: relative;
+        background: linear-gradient(135deg, #e0f2fe 0%, #f9fafb 45%, #fee2e2 100%);
+    }
+
+    .highlight-sector::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        padding: 1px;
+        background: linear-gradient(90deg, #38bdf8, #fb7185);
+        -webkit-mask:
+          linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+
+    /* 로그인 안 되었을 때 축소 상태 */
+    .collapsed-sector {
+        min-height: 120px;
+        box-shadow: none;
+        background: #f9fafb;
+    }
+
+    .collapsed-sector .card-column {
+        display: none;
+    }
+
+    /* 섹터 헤더(제목) 스타일 */
+    .sector-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .sector-title {
+        font-size: 20px;        /* 살짝 키우고 */
+        font-weight: 900;       /* 더 두껍게 */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        letter-spacing: 0.03em;
+    }
+
+    .sector-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);  /* 아래 라인 */
+    }
+
+    .sector-title span.icon {
+        display: inline-flex;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        background: white;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.22);
+    }
+
+    .sector-subtitle {
+        font-size: 11px;
+        color: #4b5563;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background-color: rgba(255,255,255,0.8);
+    }
+
+    .aligned-header .sector-title {
+        color: #0f766e;
+    }
+
+    .opposite-header .sector-title {
+        color: #b91c1c;
+    }
+
+    /* 추천 카드 컨테이너 */
+    .card-column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* 뉴스 카드 공통 */
     .news-card {
         display: flex;
         align-items: flex-start;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px;
-        margin-bottom: 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px;
+        margin: 0 0 8px;
         text-decoration: none;
         color: inherit;
+        background-color: #ffffff;
+        overflow: hidden;
+        transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
     }
     .news-card:hover {
-        background-color: #f9f9f9;
-    }
-    .news-thumbnail {
-        width: 80px;
-        height: 60px;
-        object-fit: cover;
-        margin-right: 10px;
-        border-radius: 6px;
-    }
-    .news-content {
-        flex: 1;
-    }
-    .news-title {
-        font-size: 14px;
-        font-weight: bold;
-        margin: 0 0 3px 0;
-    }
-    .news-desc {
-        font-size: 12px;
-        color: #555;
-        margin: 0;
-    }
-    .news-date {
-        font-size: 11px;
-        color: #888;
-        margin-top: 3px;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12);
+        background-color: #f9fafb;
     }
 
-    /* 섹터 내부 스크롤 크기 */
-    .grid-item h2 {
+    /* 추천용 카드의 높이를 맞추기 위해 약간 고정(제목+2줄 설명 정도) */
+    .recommend-card {
+        min-height: 160px;
+        max-height: 160px;
+    }
+
+    .news-thumbnail {
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        margin-right: 14px;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+
+    .news-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .news-title {
+        font-size: 17px;
+        font-weight: 800;
+        margin: 0 0 6px;
+        color: #0f172a;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .news-desc {
+        font-size: 14px;
+        color: #4b5563;
+        margin: 0 0 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .news-date {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: auto;
+    }
+
+    /* 반대 시각 태그 */
+    .opposite-tag {
+        font-size: 11px;
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background-color: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+        margin-top: 4px;
+    }
+
+    /* 로그인 안내 메시지 */
+    .recommend-message {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #4b5563;
+    }
+    .recommend-message a {
+        color: #2563eb;
+        text-decoration: underline;
+        font-weight: 600;
+    }
+
+    /* 언론사 섹터는 조금 덜 강조 */
+    .grid-item.news-by-source {
+        background-color: #f9fafb;
+        box-shadow: 0 2px 6px rgba(148, 163, 184, 0.2);
+    }
+
+    .grid-item.news-by-source h2 {
         font-size: 16px;
         margin-top: 0;
+        margin-bottom: 8px;
+        color: #111827;
+    }
+
+    /* 섹터 3~6 내부 리스트 스크롤 가능 */
+    .news-by-source-inner {
+        max-height: 520px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    /* 순차 페이드인 효과 */
+    .fade-in {
+        opacity: 0;
+        animation: fadeInUp 0.35s ease forwards;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .site-footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        border-top: 1px solid #e5e7eb;
+        padding: 14px 0;
+        background-color: #f9fafb;
+        font-size: 12px;
+        color: #6b7280;
+        z-index: 30;
+    }
+
+    .site-footer-inner {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 20px;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .site-footer-inner a {
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    .site-footer-inner a:hover {
+        text-decoration: underline;
     }
   </style>
 
@@ -115,33 +340,202 @@
 </head>
 <body>
 
-<div class="title">Fit-News</div>
+<div class="title">
+  <a href="/" style="text-decoration:none; color:inherit;">Fit-News</a>
+</div>
+<!-- 🧪 디버깅용 헤더 (개발 중에만 사용) -->
+<div th:replace="fragments/header :: debugHeader"></div>
 
+<!-- 👀 실제 서비스용 헤더 -->
 <header th:replace="fragments/header :: header"></header>
 
-<div class="grid-container">
-  <!-- 섹터 1,2는 비워둠 -->
-  <div class="grid-item" id="sector1">추천뉴스</div>
-  <div class="grid-item" id="sector2">이건 어때요?</div>
+<div class="page-wrapper">
 
-  <!-- 섹터 3~6: 뉴스 출력 -->
-  <div th:each="entry, iterStat : ${newsList}" class="grid-item"
-       th:if="${iterStat.index >= 0 and iterStat.index < 4}">
-    <h2 th:text="${entry.key}">언론사</h2>
-    <div th:each="n : ${entry.value}">
-      <a th:href="${n.link}" th:onclick="'return logClick(event,' + ${n.id} + ');'" class="news-card">
-        <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
-             class="news-thumbnail" alt="썸네일">
-        <div class="news-content">
-          <p class="news-title" th:text="${n.title}"></p>
-          <p class="news-desc" th:text="${n.description}"></p>
-          <p class="news-date" th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
-        </div>
-      </a>
+  <div class="grid-container">
+
+    <!-- 섹터 1: 내 성향 뉴스 -->
+    <div class="grid-item highlight-sector" id="sector1">
+      <div class="sector-header aligned-header">
+        <h2 class="sector-title">
+          <span class="icon">✓</span>
+          내 성향에 맞는 뉴스
+        </h2>
+        <span class="sector-subtitle">나와 잘 맞는 기사 추천</span>
+      </div>
+      <div id="aligned-container" class="card-column"></div>
+      <p id="recommend-message" class="recommend-message" style="display:none;"></p>
     </div>
+
+    <!-- 섹터 2: 반대 성향 뉴스 -->
+    <div class="grid-item highlight-sector" id="sector2">
+      <div class="sector-header opposite-header">
+        <h2 class="sector-title">
+          <span class="icon">⚖</span>
+          다른 시각의 뉴스
+        </h2>
+        <span class="sector-subtitle">균형 잡힌 시각 제공</span>
+      </div>
+      <div id="opposite-container" class="card-column"></div>
+    </div>
+
+    <!-- 섹터 3~6: 언론사별 뉴스 -->
+    <div th:each="entry, iterStat : ${newsList}" class="grid-item news-by-source"
+         th:if="${iterStat.index >= 0 and iterStat.index < 4}">
+      <h2 th:text="${entry.key}">언론사</h2>
+      <div class="news-by-source-inner">
+        <div th:each="n : ${entry.value}">
+          <a th:href="${n.link}" th:onclick="'return logClick(event,' + ${n.id} + ');'" class="news-card">
+            <img th:src="${n.thumbnailUrl != null ? n.thumbnailUrl : '/images/default-thumb.png'}"
+                 class="news-thumbnail" alt="썸네일">
+            <div class="news-content">
+              <p class="news-title" th:text="${n.title}"></p>
+              <p class="news-desc" th:text="${n.description}"></p>
+              <p class="news-date" th:text="${#temporals.format(n.pubDate, 'yyyy-MM-dd HH:mm')}"></p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
   </div>
-  </div>
+
 </div>
+
+<script>
+  // 추천 뉴스 클릭 로그 + 이동
+  async function logAndGo(newsId, url) {
+      try {
+          const res = await fetchWithAuth("/api/logs/click", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ newsId })
+          });
+
+          const link = await res.text();
+          window.open(link, "_blank");
+      } catch (e) {
+          console.error("로그 기록 실패:", e);
+          window.open(url, "_blank");
+      }
+  }
+
+  (async function () {
+      const alignedContainer = document.getElementById("aligned-container");
+      const oppositeContainer = document.getElementById("opposite-container");
+      const sector1 = document.getElementById("sector1");
+      const sector2 = document.getElementById("sector2");
+      const msg = document.getElementById("recommend-message");
+
+      try {
+          const res = await fetchWithAuth("/api/recommend");
+
+          // 🔐 로그인 안 되어 있을 때
+          if (res.status === 401) {
+              alignedContainer.innerHTML = "";
+              oppositeContainer.innerHTML = "";
+
+              sector1.classList.add("collapsed-sector");
+              sector2.classList.add("collapsed-sector");
+
+              msg.style.display = "block";
+              msg.innerHTML = '로그인 하시고 <a href="/login">추천 뉴스를 받아보세요</a>.';
+
+              return;
+          }
+
+          if (!res.ok) {
+              console.error("추천 뉴스 불러오기 실패:", res.status);
+              return;
+          }
+
+          const data = await res.json();
+          const aligned = data.aligned ?? data;
+          const opposite = data.opposite ?? [];
+
+          alignedContainer.innerHTML = "";
+          oppositeContainer.innerHTML = "";
+          msg.style.display = "none";
+          sector1.classList.remove("collapsed-sector");
+          sector2.classList.remove("collapsed-sector");
+
+          // 공통 카드 생성 함수
+          function createCard(item, isOpposite, index) {
+              const a = document.createElement("a");
+              a.className = "news-card recommend-card fade-in";
+              a.style.cursor = "pointer";
+              a.style.animationDelay = (index * 0.08) + "s";
+
+              a.onclick = (e) => {
+                  e.preventDefault();
+                  logAndGo(item.id, item.link);
+              };
+
+              const img = document.createElement("img");
+              img.className = "news-thumbnail";
+              img.src = item.thumbnailUrl || "/images/default-thumb.png";
+              img.alt = "썸네일";
+
+              const content = document.createElement("div");
+              content.className = "news-content";
+
+              const title = document.createElement("p");
+              title.className = "news-title";
+              title.innerText = item.title || "(제목 없음)";
+
+              const desc = document.createElement("p");
+              desc.className = "news-desc";
+              desc.innerText = item.description || "";
+
+              const meta = document.createElement("p");
+              meta.className = "news-date";
+              meta.innerText = item.pubDate || "";
+
+              content.appendChild(title);
+              content.appendChild(desc);
+              content.appendChild(meta);
+
+              if (isOpposite) {
+                  const tag = document.createElement("span");
+                  tag.className = "opposite-tag";
+                  tag.innerText = "다른 시각의 기사";
+                  content.appendChild(tag);
+              }
+
+              a.appendChild(img);
+              a.appendChild(content);
+              return a;
+          }
+
+          aligned.forEach((item, idx) => {
+              alignedContainer.appendChild(createCard(item, false, idx));
+          });
+
+          opposite.forEach((item, idx) => {
+              oppositeContainer.appendChild(createCard(item, true, idx));
+          });
+
+      } catch (e) {
+          console.error("추천 뉴스 렌더링 중 오류:", e);
+      }
+  })();
+</script>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span>건국대학교 졸업프로젝트 Fit-News</span>
+    <span>팀원 - 심현보, 최우헌</span>
+    <span>
+      GitHub:
+      <a href="https://github.com/wooheon00/fit-news"
+         target="_blank"
+         rel="noopener noreferrer">
+        wooheon00/fit-news
+      </a>
+    </span>
+  </div>
+</footer>
 
 </body>
 </html>

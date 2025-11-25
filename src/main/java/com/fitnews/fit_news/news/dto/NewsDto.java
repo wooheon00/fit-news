@@ -7,7 +7,8 @@ public record NewsDto(
         String title,
         String link,
         String description,
-        String thumbnailUrl
+        String thumbnailUrl,
+        String pubDate
 ) {
     public static NewsDto from(News n) {
         return new NewsDto(
@@ -15,7 +16,8 @@ public record NewsDto(
                 n.getTitle(),
                 n.getLink(),
                 n.getDescription(),
-                n.getThumbnailUrl()
+                n.getThumbnailUrl(),
+                n.getPubDate() != null ? n.getPubDate().toString() : null
         );
     }
 }
