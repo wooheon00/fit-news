@@ -7,6 +7,8 @@ import com.fitnews.fit_news.news.repository.NewsTendencyRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +36,17 @@ public class NewsScheduler {
     private final NewsRepository newsRepository;
     private final NewsTendencyRepository newsTendencyRepository;
 
-    @Scheduled(fixedRate = 60_000)
+    /**
+     *  ✅ 서버 시작 후 1번 즉시 실행
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void runOnStartup() {
+        logger.info("Application started. Running initial crawling job.");
+        runCrawlingJob();
+    }
+
+
+    @Scheduled(fixedRate = 30 * 60 * 1000L)
     public void runCrawlingJob() {
         long crawlingTime = System.currentTimeMillis();
         logger.info("NewsScheduler triggered at {}", crawlingTime);
