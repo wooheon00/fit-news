@@ -122,6 +122,82 @@ async function logout() {
     window.location.href = "/";
 }
 
+async function refreshAuthUI() {
+    const token = localStorage.getItem("accessToken");
+
+    const debugInfoSpan = document.getElementById("login-info");
+    const logoutBtn     = document.getElementById("logoutBtn");
+
+    const navLoggedOut  = document.getElementById("nav-logged-out");
+    const navLoggedIn   = document.getElementById("nav-logged-in");
+    const navUsername   = document.getElementById("nav-username");
+
+    // 토큰이 아예 없는 경우 = 비로그인
+    if (!token) {
+        // 디버깅 헤더
+        if (debugInfoSpan) debugInfoSpan.textContent = "(로그인 안됨)";
+        if (logoutBtn)     logoutBtn.style.display = "none";
+
+        // 서비스 헤더
+        if (navLoggedOut) navLoggedOut.style.display = "flex";
+        if (navLoggedIn)  navLoggedIn.style.display  = "none";
+
+        return;
+    }
+
+    try {
+        // /api/me 호출 (백엔드: 문자열 "로그인중 : 이름" 리턴)
+        const res = await fetch("/api/me", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (!res.ok) {
+            // 토큰은 있는데 /api/me 실패 → 로그인 만료로 취급
+            if (debugInfoSpan) debugInfoSpan.textContent = "(로그인 안됨)";
+            if (logoutBtn)     logoutBtn.style.display = "none";
+
+            if (navLoggedOut) navLoggedOut.style.display = "flex";
+            if (navLoggedIn)  navLoggedIn.style.display  = "none";
+            return;
+        }
+
+        const text = await res.text();       // ex) "로그인중 : 최우헌"
+        let displayName = text;
+
+        // "로그인중 : " 뒷부분만 잘라내기
+        const marker = "로그인중 :";
+        if (text.startsWith(marker)) {
+            displayName = text.substring(marker.length).trim(); // "최우헌"
+        }
+
+        // 디버깅 헤더 갱신
+        if (debugInfoSpan) debugInfoSpan.textContent = text; // 전체 문구 출력
+        if (logoutBtn)     logoutBtn.style.display = "inline-block";
+
+        // 서비스 헤더 갱신
+        if (navLoggedOut) navLoggedOut.style.display = "none";
+        if (navLoggedIn)  navLoggedIn.style.display  = "flex";
+        if (navUsername)  navUsername.textContent    = displayName + "님 환영합니다.";
+
+    } catch (e) {
+        console.error("auth UI 갱신 중 오류:", e);
+
+        if (debugInfoSpan) debugInfoSpan.textContent = "(로그인 상태 확인 실패)";
+        if (logoutBtn)     logoutBtn.style.display = "none";
+
+        if (navLoggedOut) navLoggedOut.style.display = "flex";
+        if (navLoggedIn)  navLoggedIn.style.display  = "none";
+    }
+}
+
+// 페이지 로드시 자동 실행하고 싶으면
+document.addEventListener("DOMContentLoaded", () => {
+    refreshAuthUI();
+});
+
 // 🔥 전역(window)에 명시적으로 붙여주기 (onclick으로 쓰기 위함)
 window.checkLogin = checkLogin;
 window.logout = logout;

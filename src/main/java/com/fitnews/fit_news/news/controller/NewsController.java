@@ -22,7 +22,7 @@ public class NewsController {
     private final NewsScheduler newsScheduler;
     private final OpenAIAPIService openAIAPIService;
 
-    @GetMapping("/main")
+    @GetMapping("/")
     public String newsList(Model model) {
         List<News> newsList = newsService.getAllNews();
 

@@ -16,11 +16,6 @@ public class PageController {
 
     private final MemberRepository memberRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "home";
-    }
-
     @GetMapping("/register")
     public String registerPage() {
         return "register";

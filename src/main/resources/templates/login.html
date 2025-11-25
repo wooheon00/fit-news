@@ -1,56 +1,225 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>로그인</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 - Fit-News</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f5f7;
+        }
+
+        .page-wrapper {
+            max-width: 420px;
+            margin: 40px auto 0;
+            padding: 0 16px 40px;
+        }
+
+        h1.page-title {
+            text-align: center;
+            font-size: 24px;
+            margin: 18px 0;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 22px 22px;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.15);
+            border: 1px solid #e5e7eb;
+        }
+
+        .auth-card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .field-group {
+            margin-bottom: 14px;
+        }
+
+        .field-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .field-group input {
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .field-group input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 10px 0;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        #loginMsg {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #b91c1c;
+        }
+
+        .divider {
+            margin: 18px 0 12px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 38%;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .social-links a {
+            display: block;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 7px 10px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 6px;
+            color: #111827;
+            background: #f9fafb;
+        }
+
+        .social-links a:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .bottom-link {
+            margin-top: 14px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .bottom-link a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .bottom-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<h1>로그인</h1>
+<div class="page-wrapper">
+    <h1 class="page-title">로그인</h1>
 
-<!-- 기존 ID/PW 로그인 그대로 유지 -->
-<form id="loginForm">
-    <input type="text" id="username" placeholder="아이디" required><br>
-    <input type="password" id="password" placeholder="비밀번호" required><br>
-    <button type="submit">로그인</button>
-</form>
+    <div class="auth-card">
+        <!-- ID/PW 로그인 -->
+        <h2>Fit-News 계정 로그인</h2>
+        <form id="loginForm">
+            <div class="field-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" placeholder="아이디를 입력하세요" required>
+            </div>
 
-<p id="loginMsg"></p>
+            <div class="field-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
+            </div>
 
-<hr/>
+            <button type="submit" class="primary-btn">로그인</button>
+        </form>
 
-<!-- 🔥 여기만 추가 -->
-<h3>소셜 로그인</h3>
-<a href="/oauth2/authorization/google">구글로 로그인</a><br/>
-<a href="/oauth2/authorization/kakao">카카오로 로그인</a><br/>
+        <p id="loginMsg"></p>
+
+        <div class="divider">또는</div>
+
+        <!-- 소셜 로그인 -->
+        <h2 style="font-size:15px;margin-bottom:8px;">소셜 로그인</h2>
+        <div class="social-links">
+            <a href="/oauth2/authorization/google">Google 계정으로 로그인</a>
+            <a href="/oauth2/authorization/kakao">Kakao 계정으로 로그인</a>
+        </div>
+
+        <div class="bottom-link">
+            아직 계정이 없으신가요?
+            <a href="/register">회원가입하기</a>
+        </div>
+    </div>
+</div>
 
 <script>
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+        e.preventDefault();
 
-    const data = {
-        username: document.getElementById("username").value,
-        password: document.getElementById("password").value
-    };
+        const data = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        };
 
-    const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    });
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
 
-    if (res.status === 200) {
-        const result = await res.json();
-        localStorage.setItem("accessToken", result.accessToken);
-        localStorage.setItem("refreshToken", result.refreshToken);
+        if (res.status === 200) {
+            const result = await res.json();
+            localStorage.setItem("accessToken", result.accessToken);
+            localStorage.setItem("refreshToken", result.refreshToken);
 
-        if (result.needOnboarding) {
-            window.location.href = "/onboarding";
+            if (result.needOnboarding) {
+                window.location.href = "/onboarding";
+            } else {
+                window.location.href = "/";
+            }
         } else {
-            window.location.href = "/";
+            document.getElementById("loginMsg").innerText = "로그인 실패: " + res.status;
         }
-    } else {
-        document.getElementById("loginMsg").innerText = "로그인 실패: " + res.status;
-    }
-});
+    });
 </script>
 </body>
 </html>

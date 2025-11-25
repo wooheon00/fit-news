@@ -1,79 +1,278 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>회원 정보 & 성향 설정</title>
+    <meta charset="UTF-8">
+    <title>회원 정보 & 성향 설정 - Fit-News</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f5f7;
+        }
+
+        .page-wrapper {
+            max-width: 720px;
+            margin: 32px auto 40px;
+            padding: 0 16px;
+        }
+
+        h1.page-title {
+            text-align: center;
+            font-size: 24px;
+            margin: 18px 0 8px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .onboarding-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 22px 22px 20px;
+            box-shadow: 0 14px 35px rgba(15, 23, 42, 0.14);
+            border: 1px solid #e5e7eb;
+        }
+
+        h3.section-title {
+            margin: 18px 0 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .field-group {
+            margin-bottom: 12px;
+        }
+
+        .field-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .field-group input[type="text"],
+        .field-group select {
+            width: 220px;
+            max-width: 100%;
+            padding: 8px 9px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .field-group input[type="text"]:focus,
+        .field-group select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .radio-item {
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .radio-item input {
+            margin-right: 4px;
+        }
+
+        .question-block {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+
+        .question-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .question-options label {
+            display: block;
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 3px;
+        }
+
+        .question-options input {
+            margin-right: 4px;
+        }
+
+        .primary-btn {
+            margin-top: 16px;
+            padding: 10px 26px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary-btn:hover {
+            filter: brightness(1.05);
+        }
+
+        #msg {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<h1>회원 정보 / 성향 설정</h1>
+<div class="page-wrapper">
+    <h1 class="page-title">회원 정보 & 성향 설정</h1>
+    <p class="subtitle">더 나은 맞춤 추천을 위해, 간단한 정보를 설정해 주세요.</p>
 
-<form id="onboardingForm">
-    <h3>기본 정보</h3>
-    <label>이름:
-        <input type="text" id="name" required>
-    </label><br/>
+    <div class="onboarding-card">
+        <form id="onboardingForm">
+            <h3 class="section-title">기본 정보</h3>
 
-    <label>나이대:
-        <select id="age">
-            <option value="a">미성년</option>
-            <option value="b">청년</option>
-            <option value="c">중년</option>
-            <option value="d">노년</option>
-        </select>
-    </label><br/>
+            <div class="field-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" placeholder="이름을 입력하세요" required>
+            </div>
 
-    <label>성별 성향 (0=여성향 ~ 100=남성향):
-        <input type="range" id="gender" min="0" max="100" value="50">
-        <span id="genderValue">50</span>
-    </label><br/>
+            <div class="field-group">
+                <label for="age">나이대</label>
+                <select id="age">
+                    <option value="a">미성년</option>
+                    <option value="b" selected>청년</option>
+                    <option value="c">중년</option>
+                    <option value="d">노년</option>
+                </select>
+            </div>
 
-    <h3>정치 성향 질문</h3>
-    <p>아래 뉴스 제목 중, 더 관심이 가는 쪽을 선택해주세요.</p>
+            <div class="field-group">
+                <label>성별</label>
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="genderChoice" value="female" checked> 여성
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="genderChoice" value="male"> 남성
+                    </label>
+                </div>
 
-    <label>
-        <input type="radio" name="politicChoice" value="conservative" required>
-        [A] 세금 감면 및 규제 완화를 통한 기업 활성화
-    </label><br/>
+            </div>
 
-    <label>
-        <input type="radio" name="politicChoice" value="neutral">
-        [B] 복지와 경제 성장을 균형 있게 추진하는 정책
-    </label><br/>
+            <h3 class="section-title">정치 성향 질문</h3>
 
-    <label>
-        <input type="radio" name="politicChoice" value="progressive">
-        [C] 복지 확대와 사회적 약자 보호를 위한 정책
-    </label><br/>
+            <!-- 질문 1: 경제 정책 -->
+            <div class="question-block">
+                <div class="question-text">
+                    1. 경제 정책에 대해, 어떤 방향에 더 끌리나요?
+                </div>
+                <div class="question-options">
+                    <label>
+                        <input type="radio" name="q1" value="20" required>
+                        기업 규제 완화와 세금 인하를 통해 성장을 우선해야 한다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q1" value="50">
+                        성장과 분배를 균형 있게 고려해야 한다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q1" value="80">
+                        세금을 통해 복지를 강화하고, 사회적 약자를 우선 지원해야 한다.
+                    </label>
+                </div>
+            </div>
 
-    <button type="submit">저장하기</button>
-</form>
+            <!-- 질문 2: 복지/사회 안전망 -->
+            <div class="question-block">
+                <div class="question-text">
+                    2. 복지와 사회 안전망에 대해, 어떤 생각에 더 가깝나요?
+                </div>
+                <div class="question-options">
+                    <label>
+                        <input type="radio" name="q2" value="20" required>
+                        복지는 최소한 수준이면 되고, 개인 책임이 더 중요하다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q2" value="50">
+                        기본적인 복지와 개인의 책임이 함께 균형을 이루어야 한다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q2" value="80">
+                        세금을 더 내더라도, 의료·교육 등 복지를 크게 강화해야 한다.
+                    </label>
+                </div>
+            </div>
 
-<p id="msg"></p>
+            <!-- 질문 3: 사회 변화/개혁 -->
+            <div class="question-block">
+                <div class="question-text">
+                    3. 사회 변화와 개혁 속도에 대해 어떻게 생각하나요?
+                </div>
+                <div class="question-options">
+                    <label>
+                        <input type="radio" name="q3" value="20" required>
+                        급격한 변화보다는 전통과 질서를 유지하는 것이 더 중요하다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q3" value="50">
+                        변화는 필요하지만, 속도와 범위를 신중하게 조절해야 한다.
+                    </label>
+                    <label>
+                        <input type="radio" name="q3" value="80">
+                        차별 해소와 평등을 위해서라면 빠른 제도 개혁도 필요하다.
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="primary-btn">저장하기</button>
+        </form>
+
+        <p id="msg"></p>
+    </div>
+</div>
 
 <script src="/js/auth.js"></script>
 <script>
-    const genderInput = document.getElementById("gender");
-    const genderValue = document.getElementById("genderValue");
-    genderInput.addEventListener("input", () => {
-        genderValue.innerText = genderInput.value;
-    });
-
     document.getElementById("onboardingForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const politicChoice = document.querySelector('input[name="politicChoice"]:checked').value;
+        const name = document.getElementById("name").value;
+        const age = document.getElementById("age").value;
 
-        // 정치성향을 대략 점수로 맵핑 (예: 0~100)
-        let politicScore = 50;
-        if (politicChoice === "conservative") politicScore = 20;
-        if (politicChoice === "neutral")      politicScore = 50;
-        if (politicChoice === "progressive")  politicScore = 80;
+        const genderChoice = document.querySelector('input[name="genderChoice"]:checked').value;
+        const genderScore = (genderChoice === "female") ? 20 : 80;
+
+        // 정치 성향 3문항 점수 평균
+        const q1 = parseInt(document.querySelector('input[name="q1"]:checked').value, 10);
+        const q2 = parseInt(document.querySelector('input[name="q2"]:checked').value, 10);
+        const q3 = parseInt(document.querySelector('input[name="q3"]:checked').value, 10);
+        const politicScore = Math.round((q1 + q2 + q3) / 3); // 20~80 사이
 
         const body = {
-            name: document.getElementById("name").value,
-            age: document.getElementById("age").value,                // 'a'~'d'
-            gender: parseInt(document.getElementById("gender").value), // 0~100
+            name: name,
+            age: age,            // 'a'~'d'
+            gender: genderScore, // 20 or 80
             politic: politicScore
         };
 
@@ -84,10 +283,13 @@
         });
 
         if (res.ok) {
-            document.getElementById("msg").innerText = "저장되었습니다. 이제 추천 뉴스를 이용해보세요!";
-            setTimeout(() => window.location.href = "/recommend", 1000);
+            document.getElementById("msg").innerText =
+                "저장되었습니다. 이제 추천 뉴스를 이용해보세요!";
+            document.getElementById("msg").style.color = "#16a34a";
+            setTimeout(() => window.location.href = "/", 1000);
         } else {
             document.getElementById("msg").innerText = "저장 실패: " + res.status;
+            document.getElementById("msg").style.color = "#b91c1c";
         }
     });
 </script>
